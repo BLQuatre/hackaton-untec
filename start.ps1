@@ -1,13 +1,13 @@
 # Startup script for untecwow project (PowerShell version)
 
 # Stop all running containers if any
-docker-compose down
+docker compose down
 
 # Build and start containers in detached mode
-docker-compose up --build -d
+docker compose up --build -d
 
 # Display container status
-docker-compose ps
+docker compose ps
 
 Write-Host "Application is running!" -ForegroundColor Green
 Write-Host "Backend API: http://localhost:8000" -ForegroundColor Cyan
