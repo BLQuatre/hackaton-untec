@@ -459,7 +459,7 @@ export default function HackathonApp() {
 										</div>
 									</TabsContent>
 
-									<TabsContent value="coordinates" className="space-y-4 mt-6 animate-in slide-in-from-right-4 duration-300">
+									<TabsContent value="coordinates" className="space-y-4 mt-6 animate-in slide-in-from-bottom-4 duration-300">
 										<div className="grid grid-cols-2 gap-4">
 											<div>
 												<label htmlFor="latitude" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
