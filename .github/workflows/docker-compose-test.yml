@@ -5,155 +5,89 @@ on:
     branches: [ main, master ]
   pull_request:
     branches: [ main, master ]
-  workflow_dispatch:
+  workflow_dispatch:  # Allows manual triggering
 
 jobs:
   test-docker-compose:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Docker Buildx
+      - name: Set up Docker
         uses: docker/setup-buildx-action@v2
 
-      - name: Create Docker Compose compatibility script
+      # Create a basic .env file for testing if one doesn't exist
+      - name: Create test .env file
         run: |
-          # Create a script to use 'docker compose' instead of 'docker-compose'
-          echo '#!/bin/bash
-          docker compose "$@"' > docker-compose
-          chmod +x docker-compose
-          sudo mv docker-compose /usr/local/bin/
-          echo "Created docker-compose compatibility wrapper"
+          if [ ! -f .env ]; then
+            echo "Creating basic .env file for testing"
+            echo "BACKEND_PORT=8000" > .env
+            echo "FRONTEND_PORT=3000" >> .env
+          fi
 
-      - name: Create .env file
+      # Test shell script version
+      - name: Run start.sh script
         run: |
-          echo "BACKEND_PORT=8000" > .env
-          echo "FRONTEND_PORT=3000" >> .env
+          chmod +x ./start.sh
+          ./start.sh
 
-      - name: Prepare frontend files
+      - name: Verify containers are running
         run: |
-          # Create public directory if it doesn't exist
-          mkdir -p frontend/public
-          # Create a dummy file to ensure the directory isn't empty
-          touch frontend/public/.gitkeep
-          echo "Created necessary directories for frontend build"
+          # Wait for containers to initialize
+          sleep 10
 
-      - name: Modify frontend Dockerfile for testing
-        run: |
-          # Create backup of original Dockerfile
-          cp frontend/Dockerfile frontend/Dockerfile.bak
+          # Check if both containers are running
+          BACKEND_RUNNING=$(docker ps --filter "name=untec-backend" --format '{{.Names}}' | grep untec-backend)
+          FRONTEND_RUNNING=$(docker ps --filter "name=untec-frontend" --format '{{.Names}}' | grep untec-frontend)
 
-          # Create a simplified test Dockerfile that won't fail on missing directories
-          cat > frontend/Dockerfile.new << 'EOF'
-          FROM node:24-alpine3.22 AS builder
-
-          RUN corepack enable && corepack prepare pnpm@latest --activate
-
-          WORKDIR /app
-
-          # Create necessary directories
-          RUN mkdir -p public .next
-
-          COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-          RUN pnpm install || pnpm install --no-frozen-lockfile
-
-          COPY . .
-          RUN pnpm build || echo "Build failed, but continuing for testing"
-
-          FROM node:24-alpine3.22
-
-          RUN corepack enable && corepack prepare pnpm@latest --activate
-
-          WORKDIR /app
-
-          # Create necessary directories
-          RUN mkdir -p public .next
-
-          COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
-          RUN pnpm install --prod || pnpm install --no-frozen-lockfile
-
-          # Conditionally copy directories if they exist
-          COPY --from=builder /app/public ./public || true
-          COPY --from=builder /app/.next ./.next || true
-
-          ENV NODE_ENV=production
-
-          EXPOSE 3000
-
-          # Use a command that will succeed for testing
-          CMD ["sh", "-c", "echo 'Frontend ready for testing' && sleep infinity"]
-          EOF
-
-          # Replace the Dockerfile
-          mv frontend/Dockerfile.new frontend/Dockerfile
-          echo "Created testing version of frontend Dockerfile"
-
-      - name: Start application with Docker Compose
-        run: |
-          # Use docker compose directly instead of the script
-          docker compose down
-          docker compose up --build -d
-          echo "Application started"
-
-      - name: Display Docker container status after startup
-        run: |
-          echo "Initial container status:"
-          docker compose ps
-          docker compose logs --tail=50
-
-      - name: Wait for services to be ready
-        run: |
-          # Wait for containers to initialize (give them some time to start)
-          sleep 30
-
-          # Check if containers are running
-          docker compose ps
-
-          # Print logs for debugging
-          echo "Backend logs:"
-          docker compose logs backend --tail=50
-          echo "Frontend logs:"
-          docker compose logs frontend --tail=50
-
-          # Wait for backend to be available (timeout after 120 seconds)
-          echo "Checking backend availability..."
-          timeout 120 bash -c 'until $(curl --output /dev/null --silent --head --fail http://localhost:8000/admin || curl --output /dev/null --silent --fail http://localhost:8000); do printf "."; sleep 5; done' || echo "Backend not responding, but continuing test"
-          echo "Backend check completed"
-
-          # Check frontend container is running (instead of trying to connect to it)
-          echo "Checking frontend container status..."
-          if docker compose ps frontend | grep -q "Up"; then
-            echo "Frontend container is running"
-          else
-            echo "Frontend container is not running"
+          if [ -z "$BACKEND_RUNNING" ]; then
+            echo "Backend container is not running!"
+            docker-compose logs backend
             exit 1
           fi
 
-      - name: Test backend API connection
-        run: |
-          # Basic test to check if backend responds
-          curl -s http://localhost:8000 || true
-
-      - name: Display Docker container status
-        run: docker compose ps
-
-      - name: Check container logs if test fails
-        if: failure()
-        run: |
-          echo "Docker Compose Logs:"
-          docker compose logs
-
-      - name: Stop application
-        run: |
-          docker compose down
-          echo "All containers have been stopped."
-
-      - name: Restore original Dockerfile (cleanup)
-        if: always()
-        run: |
-          if [ -f frontend/Dockerfile.bak ]; then
-            mv frontend/Dockerfile.bak frontend/Dockerfile
-            echo "Restored original Dockerfile"
+          if [ -z "$FRONTEND_RUNNING" ]; then
+            echo "Frontend container is not running!"
+            docker-compose logs frontend
+            exit 1
           fi
+
+          echo "All containers are running successfully."
+
+      - name: Check if services are responsive
+        run: |
+          # Check if backend service is responding
+          BACKEND_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8000 || echo "Failed")
+          if [ "$BACKEND_RESPONSE" = "Failed" ] && [ "$BACKEND_RESPONSE" != "200" ]; then
+            echo "Backend service is not responding properly!"
+            docker-compose logs backend
+          else
+            echo "Backend service is responding."
+          fi
+
+          # Check if frontend service is responding
+          FRONTEND_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3000 || echo "Failed")
+          if [ "$FRONTEND_RESPONSE" = "Failed" ] && [ "$FRONTEND_RESPONSE" != "200" ]; then
+            echo "Frontend service is not responding properly!"
+            docker-compose logs frontend
+          else
+            echo "Frontend service is responding."
+          fi
+
+      - name: Run stop.sh script
+        run: |
+          chmod +x ./stop.sh
+          ./stop.sh
+
+      - name: Verify containers are stopped
+        run: |
+          # Check if containers are stopped
+          CONTAINERS_RUNNING=$(docker ps --filter "name=untec-" --format '{{.Names}}')
+
+          if [ -n "$CONTAINERS_RUNNING" ]; then
+            echo "Some containers are still running: $CONTAINERS_RUNNING"
+            exit 1
+          fi
+
+          echo "All containers have been successfully stopped."
