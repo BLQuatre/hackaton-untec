@@ -49,16 +49,15 @@ export default function HackathonApp() {
 	// App state management
 	const [appState, setAppState] = useState<AppState>("search")
 	const [darkMode, setDarkMode] = useState(false)
+	const [searchMethod, setSearchMethod] = useState<SearchMethod>("address")
 
 	// Search data
-	const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null)
-
-	const [rawAddress, setRawAddress] = useState("")
+	const [coords, setCoords] = useState<Coords | null>(null)
 	const [address, setAddress] = useState("")
+
 	const [locationData, setLocationData] = useState<LocationData | null>(null)
 	const [error, setError] = useState("")
-	const [selectedPoint, setSelectedPoint] = useState<{ lat: number; lon: number } | null>(null)
-	const [searchMethod, setSearchMethod] = useState<SearchMethod>("address")
+
 	const [latInput, setLatInput] = useState("")
 	const [lonInput, setLonInput] = useState("")
 
@@ -83,13 +82,22 @@ export default function HackathonApp() {
 		}
 	}, [darkMode])
 
+	const handleChangeSearchMethod = (method: SearchMethod) => {
+		setSearchMethod(method)
+		setCoords(null)
+		setAddress("")
+		setSuggestions([])
+		setShowSuggestions(false)
+		setSelectedSuggestionIndex(-1)
+	}
+
 	// Handle input change and show suggestions
 	const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, '')
+		setAddress(value)
 
 		if (address !== value)
-			setAddress("")
-		setRawAddress(value)
+			setCoords(null)
 		setSelectedSuggestionIndex(-1)
 
 		if (value.length < 5) {
@@ -98,47 +106,53 @@ export default function HackathonApp() {
 			return
 		}
 
-		const response = await axios.get(`https://data.geopf.fr/geocodage/completion?text=${value}`)
-		if (response.status !== 200 || !response.data) {
-			setSuggestions([])
-			setShowSuggestions(false)
-			return
-		}
+		setTimeout(async () => {
+			const response = await axios.get(`https://data.geopf.fr/geocodage/completion?text=${value}`)
+			if (response.status !== 200 || !response.data) {
+				setSuggestions([])
+				setShowSuggestions(false)
+				return
+			}
 
-		const data = response.data.results
+			if (!response.data || !response.data.results || response.data.results.length === 0) {
+				setSuggestions([])
+				setShowSuggestions(false)
+				return
+			}
+			const data = response.data.results
 
-		const suggestions = []
-		for (let i = 0; i < Math.min(data.length, 10); i++) {
-			const feature = data[i]
+			const suggestions = []
+			for (let i = 0; i < Math.min(data.length, 10); i++) {
+				const feature = data[i]
 
-			if (feature.kind !== "housenumber" && feature.kind !== "street")
-				continue
+				if (feature.kind !== "housenumber" && feature.kind !== "street")
+					continue
 
-			console.log("Feature:", feature)
+				console.log("Feature:", feature)
 
-			suggestions.push({
-				id: i,
-				fullAddress: feature.fulltext,
-				type: feature.kind,
-				coordinates: {
-					lat: feature.x,
-					lon: feature.y,
-				},
-			})
-		}
-		setSuggestions(suggestions)
-		setShowSuggestions(true)
+				suggestions.push({
+					id: i,
+					fullAddress: feature.fulltext,
+					type: feature.kind,
+					coordinates: {
+						lat: feature.x,
+						lon: feature.y,
+					},
+				})
+			}
+			setSuggestions(suggestions)
+			setShowSuggestions(true)
+		}, 1000)
 	}
 
 	// Handle suggestion selection
 	const handleSuggestionSelect = (suggestion: AutocompleteSuggestion) => {
 		setAddress(suggestion.fullAddress)
-		setRawAddress(suggestion.fullAddress)
 		setShowSuggestions(false)
 		setSuggestions([])
 
 		if (suggestion.coordinates) {
-			setSelectedPoint(suggestion.coordinates)
+			setCoords(suggestion.coordinates)
 		}
 	}
 
@@ -158,27 +172,28 @@ export default function HackathonApp() {
 		document.addEventListener("mousedown", handleClickOutside)
 		return () => document.removeEventListener("mousedown", handleClickOutside)
 	}, [])
+
+	const handleCoordsInputChange = (e: React.ChangeEvent<HTMLInputElement>, setFun: (value: React.SetStateAction<string>) => void) => {
+		setFun(e.target.value);
+		const lat = parseFloat(latInput);
+		const lon = parseFloat(lonInput);
+		setCoords(!isNaN(lat) && !isNaN(lon) ? { lat, lon } : null);
+	}
+
 	// Handle search
 	const handleSearch = async () => {
-		if ((searchMethod === "address" && !address.trim()) ||
-			(searchMethod === "coordinates" && !selectedPoint)) return
+		if (!coords) return
 
 		setAppState("loading")
 		setError("")
 		setShowSuggestions(false)
 
 		try {
-			let requestData
-			if (searchMethod === "address") {
-				requestData = suggestions[selectedSuggestionIndex] || {
-					address: address.trim(),
-				}
-			} else {
-				// Both map and coordinates methods use selectedPoint
-				requestData = { coordinates: selectedPoint }
-			}
+			const response = await axios.post("http://localhost:8000/api/search/", {
+				coordinates: coords,
+				address: address.trim(),
+			})
 
-			const response = await axios.post("/api/location-info/", requestData)
 			setLocationData(response.data)
 			setAppState("results")
 		} catch (err) {
@@ -206,18 +221,21 @@ export default function HackathonApp() {
 				return "📍"
 		}
 	}
+
 	const resetSearch = () => {
 		setAppState("search")
 		setAddress("")
-		setRawAddress("")
+		setCoords(null)
+		setSelectedSuggestionIndex(-1)
+		setShowSuggestions(false)
 		setSuggestions([])
-		setSelectedPoint(null)
 		setLocationData(null)
 		setError("")
 		setSearchMethod("address")
 		setLatInput("")
 		setLonInput("")
 	}
+
 	return (
 		<div
 			className={`min-h-screen transition-all duration-300 ease-in-out relative overflow-hidden ${
@@ -303,7 +321,7 @@ export default function HackathonApp() {
 							<CardContent>
 								<Tabs
 									value={searchMethod}
-									onValueChange={(value) => setSearchMethod(value as SearchMethod)}
+									onValueChange={(value) => handleChangeSearchMethod(value as SearchMethod)}
 									className="transition-all duration-300"
 								>
 									<TabsList className="grid w-full grid-cols-2 transition-all duration-300">
@@ -329,7 +347,7 @@ export default function HackathonApp() {
 												ref={inputRef}
 												type="text"
 												placeholder={t('search.placeholder')}
-												value={rawAddress}
+												value={address}
 												onChange={handleInputChange}
 												onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
 												className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white pr-10 text-lg py-6 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg hover:shadow-md"
@@ -337,11 +355,10 @@ export default function HackathonApp() {
 											/>
 											<Search
 												className={cn("absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 transition-all duration-300",
-													(searchMethod === "address" && address.trim()) || (searchMethod === "coordinates" && selectedPoint) ? "hover:text-primary hover:scale-[1.02] cursor-pointer" : "cursor-not-allowed"
+													coords ? "hover:text-primary hover:scale-[1.02] cursor-pointer" : "cursor-not-allowed"
 												)}
 												onClick={() => {
-													if ((searchMethod === "address" && address.trim()) || (searchMethod === "coordinates" && selectedPoint))
-														handleSearch();
+													if (coords) handleSearch();
 												}}
 											/>
 
@@ -395,16 +412,7 @@ export default function HackathonApp() {
 													type="text"
 													placeholder="e.g. 49.4944"
 													value={latInput}
-													onChange={(e) => {
-														setLatInput(e.target.value);
-														const lat = parseFloat(e.target.value);
-														const lon = parseFloat(lonInput);
-														if (!isNaN(lat) && !isNaN(lon)) {
-															setSelectedPoint({ lat, lon });
-														} else {
-															setSelectedPoint(null);
-														}
-													}}
+													onChange={(e) => handleCoordsInputChange(e, setLatInput)}
 													className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white text-lg py-6 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg hover:shadow-md"
 												/>
 											</div>
@@ -417,28 +425,11 @@ export default function HackathonApp() {
 													type="text"
 													placeholder="e.g. 0.1079"
 													value={lonInput}
-													onChange={(e) => {
-														setLonInput(e.target.value);
-														const lat = parseFloat(latInput);
-														const lon = parseFloat(e.target.value);
-														if (!isNaN(lat) && !isNaN(lon)) {
-															setSelectedPoint({ lat, lon });
-														} else {
-															setSelectedPoint(null);
-														}
-													}}
+													onChange={(e) => handleCoordsInputChange(e, setLonInput)}
 													className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white text-lg py-6 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg hover:shadow-md"
 												/>
 											</div>
 										</div>
-
-										{selectedPoint && searchMethod === "coordinates" && (
-											<div className="text-center mt-2 p-2 bg-blue-50 dark:bg-blue-900/20 rounded-md animate-in fade-in-0 duration-300">
-												<p className="text-sm text-blue-600 dark:text-blue-400">
-													Selected coordinates: {selectedPoint.lat.toFixed(4)}, {selectedPoint.lon.toFixed(4)}
-												</p>
-											</div>
-										)}
 
 										<div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
 											<p>
@@ -455,10 +446,7 @@ export default function HackathonApp() {
 								)}
 								<Button
 									onClick={handleSearch}
-									disabled={
-										(searchMethod === "address" && !address.trim()) ||
-										(searchMethod === "coordinates" && !selectedPoint)
-									}
+									disabled={!coords}
 									className="w-full mt-6 py-6 text-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none disabled:cursor-not-allowed"
 									size="lg"
 								>

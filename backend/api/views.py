@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from .models import Example
 from .serializers import ExampleSerializer
+import time
+import random
 
 # Create your views here.
 
@@ -20,46 +22,55 @@ def health_check(request):
         'message': 'API is running'
     })
 
-@api_view(['GET', 'POST'])
+@api_view(['POST'])
 @permission_classes([AllowAny])
-def example_list(request):
+def search_location(request):
     """
-    List all examples or create a new example
-    """
-    if request.method == 'GET':
-        examples = Example.objects.all()
-        serializer = ExampleSerializer(examples, many=True)
-        return Response(serializer.data)
-
-    elif request.method == 'POST':
-        serializer = ExampleSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-@api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([AllowAny])
-def example_detail(request, pk):
-    """
-    Retrieve, update or delete an example
+    Search for location data with a simulated processing delay
     """
     try:
-        example = Example.objects.get(pk=pk)
-    except Example.DoesNotExist:
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        # Get search parameters from request
+        coordinates = request.data.get('coordinates', None)
+        address = request.data.get('address', None)
 
-    if request.method == 'GET':
-        serializer = ExampleSerializer(example)
-        return Response(serializer.data)
+        # Simulate processing time (2-5 seconds)
+        processing_time = random.uniform(2, 5)
+        time.sleep(processing_time)
 
-    elif request.method == 'PUT':
-        serializer = ExampleSerializer(example, data=request.data)
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # Mock location data based on search parameters
+        if coordinates:
+            lat = coordinates.get('lat', 0)
+            lon = coordinates.get('lon', 0)
+            location_name = f"Location at {lat:.4f}, {lon:.4f}"
+        elif address:
+            location_name = address
+        else:
+            location_name = coordinates
 
-    elif request.method == 'DELETE':
-        example.delete()
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        # Generate mock response data
+        mock_data = {
+            'name': location_name,
+            'region': random.choice(['Île-de-France', 'Provence-Alpes-Côte d\'Azur', 'Nouvelle-Aquitaine', 'Occitanie', 'Auvergne-Rhône-Alpes']),
+            'coordinates': coordinates or {'lat': random.uniform(43, 51), 'lon': random.uniform(-5, 8)},
+            'utility_data': {
+                'population': f"{random.randint(1000, 2000000):,}",
+                'elevation': f"{random.randint(0, 1000)} m",
+                'timezone': "Europe/Paris"
+            },
+            'address': address or location_name,
+            'processing_time': f"{processing_time:.2f}s",
+            'additional_info': {
+                'postal_code': f"{random.randint(10000, 99999)}",
+                'department': random.choice(['75', '13', '69', '31', '44', '59', '33', '34']),
+                'climate': random.choice(['Oceanic', 'Continental', 'Mediterranean', 'Mountain']),
+                'economic_activity': random.choice(['Tourism', 'Agriculture', 'Industry', 'Services', 'Technology'])
+            }
+        }
+
+        return Response(mock_data, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        return Response(
+            {'error': 'An error occurred while processing your search', 'details': str(e)},
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
