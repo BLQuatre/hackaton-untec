@@ -338,7 +338,7 @@ export default function HackathonApp() {
 								variant="outline"
 								size="sm"
 								onClick={toggleDarkMode}
-								className="dark:border-gray-600 dark:text-gray-300 transition-all duration-300 hover:scale-110 hover:rotate-12"
+								className="dark:border-gray-600 dark:text-gray-300 transition-all duration-300 hover:scale-105 cursor-pointer"
 							>
 								{darkMode ? (
 									<Sun className="h-4 w-4 transition-transform duration-300" />

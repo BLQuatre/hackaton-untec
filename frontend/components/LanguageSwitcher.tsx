@@ -18,7 +18,7 @@ export function LanguageSwitcher() {
       variant="outline"
       size="sm"
       onClick={toggleLanguage}
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 dark:border-gray-600 dark:text-gray-300 transition-all duration-300 hover:scale-105 cursor-pointer"
       title={t('language.switch')}
     >
       <Globe className="h-4 w-4" />
