@@ -20,15 +20,22 @@ interface Coords {
 }
 
 interface LocationData {
-	name: string
+	nom_ville: string
+	type_commune: string
+	code_postal: string
+	code_insee: string
+	population: number | null
+	superficie_km2: number | null
+	densite: number | null
+	departement: string
 	region: string
-	coordinates: Coords
-	utility_data: {
-		population: string
-		elevation: string
-		timezone: string
-	}
-	address: string
+	latitude: number | null
+	longitude: number | null
+	type_ville: string
+	nbr_unemployed: number | null
+	unemployment_commune: string
+	job_offers: number | null
+	job_offer_department: string
 }
 
 interface AutocompleteSuggestion {
@@ -179,25 +186,35 @@ export default function HackathonApp() {
 		const lon = parseFloat(lonInput);
 		setCoords(!isNaN(lat) && !isNaN(lon) ? { lat, lon } : null);
 	}
-
 	// Handle search
 	const handleSearch = async () => {
-		if (!coords) return
+		if (!coords && !address.trim()) return
 
 		setAppState("loading")
 		setError("")
 		setShowSuggestions(false)
 
 		try {
-			const response = await axios.post("http://localhost:8000/api/search/", {
-				coordinates: coords,
-				address: address.trim(),
-			})
+			const requestData: any = {}
+
+			if (coords) {
+				requestData.coordinates = coords
+			}
+
+			if (address.trim()) {
+				requestData.address = address.trim()
+			}
+
+			const response = await axios.post("http://localhost:8000/api/search/", requestData)
 
 			setLocationData(response.data)
 			setAppState("results")
-		} catch (err) {
-			setError("Failed to fetch location data")
+		} catch (err: any) {
+			if (err.response?.data?.error) {
+				setError(err.response.data.error)
+			} else {
+				setError("Failed to fetch location data")
+			}
 			setAppState("search")
 			console.error(err)
 		}
@@ -443,10 +460,9 @@ export default function HackathonApp() {
 									<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mt-4">
 										<p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
 									</div>
-								)}
-								<Button
+								)}								<Button
 									onClick={handleSearch}
-									disabled={!coords}
+									disabled={!coords && !address.trim()}
 									className="w-full mt-6 py-6 text-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none disabled:cursor-not-allowed"
 									size="lg"
 								>
@@ -503,15 +519,19 @@ export default function HackathonApp() {
 								<CardDescription className="dark:text-gray-300">
 									Detailed information about your selected location
 								</CardDescription>
-							</CardHeader>
-							<CardContent className="space-y-6">
+							</CardHeader>							<CardContent className="space-y-6">
 								<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 hover:scale-[1.02] transition-all">
 									<h3 className="text-2xl font-semibold text-blue-900 dark:text-blue-100 mb-2">
-										{locationData.name}
+										{locationData.nom_ville}
 									</h3>
 									<p className="text-blue-700 dark:text-blue-200 text-lg">
 										{locationData.region}
 									</p>
+									{locationData.departement && (
+										<p className="text-blue-600 dark:text-blue-300 text-md">
+											{locationData.departement}
+										</p>
+									)}
 								</div>
 
 								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -521,45 +541,109 @@ export default function HackathonApp() {
 											Coordinates
 										</h4>
 										<div className="space-y-2">
-											<p className="text-gray-600 dark:text-gray-300">
-												<span className="font-medium">Latitude:</span> {locationData.coordinates.lat.toFixed(6)}
-											</p>
-											<p className="text-gray-600 dark:text-gray-300">
-												<span className="font-medium">Longitude:</span> {locationData.coordinates.lon.toFixed(6)}
-											</p>
+											{locationData.latitude && (
+												<p className="text-gray-600 dark:text-gray-300">
+													<span className="font-medium">Latitude:</span> {locationData.latitude.toFixed(6)}
+												</p>
+											)}
+											{locationData.longitude && (
+												<p className="text-gray-600 dark:text-gray-300">
+													<span className="font-medium">Longitude:</span> {locationData.longitude.toFixed(6)}
+												</p>
+											)}
 										</div>
 									</div>
 
 									<div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md">
-										<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">Address</h4>
-										<p className="text-gray-600 dark:text-gray-300">
-											{locationData.address}
-										</p>
+										<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">City Information</h4>
+										<div className="space-y-1">
+											{locationData.code_postal && (
+												<p className="text-gray-600 dark:text-gray-300">
+													<span className="font-medium">Postal Code:</span> {locationData.code_postal}
+												</p>
+											)}
+											{locationData.type_commune && (
+												<p className="text-gray-600 dark:text-gray-300">
+													<span className="font-medium">Type:</span> {locationData.type_commune}
+												</p>
+											)}
+											{locationData.type_ville && (
+												<p className="text-gray-600 dark:text-gray-300">
+													<span className="font-medium">Category:</span> {locationData.type_ville}
+												</p>
+											)}
+										</div>
 									</div>
 								</div>
 
 								<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 hover:scale-[1.01] transition-all">
 									<h4 className="text-xl font-semibold text-green-900 dark:text-green-100 mb-4">
-										Location Details
-									</h4>									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-										<div className="animate-in slide-in-from-bottom-2 transition-all">
-											<p className="text-sm font-medium text-green-800 dark:text-green-200">{t('results.population')}</p>
-											<p className="text-lg text-green-700 dark:text-green-300">
-												{locationData.utility_data.population}
-											</p>
-										</div>
-										<div className="animate-in slide-in-from-bottom-2 transition-all">
-											<p className="text-sm font-medium text-green-800 dark:text-green-200">{t('results.elevation')}</p>
-											<p className="text-lg text-green-700 dark:text-green-300">
-												{locationData.utility_data.elevation}
-											</p>
-										</div>
-										<div className="animate-in slide-in-from-bottom-2 transition-all">
-											<p className="text-sm font-medium text-green-800 dark:text-green-200">{t('results.timezone')}</p>
-											<p className="text-lg text-green-700 dark:text-green-300">{locationData.utility_data.timezone}</p>
-										</div>
+										City Statistics
+									</h4>
+									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+										{locationData.population && (
+											<div className="animate-in slide-in-from-bottom-2 transition-all">
+												<p className="text-sm font-medium text-green-800 dark:text-green-200">Population</p>
+												<p className="text-lg text-green-700 dark:text-green-300">
+													{locationData.population.toLocaleString()}
+												</p>
+											</div>
+										)}
+										{locationData.superficie_km2 && (
+											<div className="animate-in slide-in-from-bottom-2 transition-all">
+												<p className="text-sm font-medium text-green-800 dark:text-green-200">Area</p>
+												<p className="text-lg text-green-700 dark:text-green-300">
+													{locationData.superficie_km2.toFixed(2)} km²
+												</p>
+											</div>
+										)}
+										{locationData.densite && (
+											<div className="animate-in slide-in-from-bottom-2 transition-all">
+												<p className="text-sm font-medium text-green-800 dark:text-green-200">Density</p>
+												<p className="text-lg text-green-700 dark:text-green-300">
+													{locationData.densite.toFixed(0)} /km²
+												</p>
+											</div>
+										)}
 									</div>
 								</div>
+
+								{/* Employment Data */}
+								{(locationData.nbr_unemployed || locationData.job_offers) && (
+									<div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 hover:scale-[1.01] transition-all">
+										<h4 className="text-xl font-semibold text-yellow-900 dark:text-yellow-100 mb-4">
+											Employment Data
+										</h4>
+										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+											{locationData.nbr_unemployed && (
+												<div className="animate-in slide-in-from-bottom-2 transition-all">
+													<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Unemployed</p>
+													<p className="text-lg text-yellow-700 dark:text-yellow-300">
+														{locationData.nbr_unemployed.toLocaleString()}
+													</p>
+													{locationData.unemployment_commune && (
+														<p className="text-xs text-yellow-600 dark:text-yellow-400">
+															in {locationData.unemployment_commune}
+														</p>
+													)}
+												</div>
+											)}
+											{locationData.job_offers && (
+												<div className="animate-in slide-in-from-bottom-2 transition-all">
+													<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Job Offers</p>
+													<p className="text-lg text-yellow-700 dark:text-yellow-300">
+														{locationData.job_offers.toLocaleString()}
+													</p>
+													{locationData.job_offer_department && (
+														<p className="text-xs text-yellow-600 dark:text-yellow-400">
+															in {locationData.job_offer_department}
+														</p>
+													)}
+												</div>
+											)}
+										</div>
+									</div>
+								)}
 							</CardContent>
 						</Card>
 					</div>
