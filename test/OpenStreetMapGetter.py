@@ -1,5 +1,6 @@
 import citysize
 import requests
+import worker
 import utils
 
 def get_infos_nearby(lat, lon, info_type, info_filters=None, radius=500):
@@ -173,6 +174,7 @@ if __name__ == "__main__":
         stats[f"{info_explicit}_nbr"] = nbr
         stats[f"{info_explicit}_radius"] = radius
         stats[f"{info_explicit}_average_distance"] = average
+    
     if transport_total_nbr == 0:
         transport_average = 0
     else:
@@ -180,6 +182,12 @@ if __name__ == "__main__":
         stats["Transport_nbr"] = transport_total_nbr
         stats["Transport_radius"] = transport_radius
         stats["Transport_average_distance"] = transport_average
+    
+    if stats["population"] >= 5000 :
+        stats["Unemployed_people"] = worker.get_unemployed(city)["nbr_unemployed"]
+        stats["Proportion of unemployed"] = str(round((worker.get_unemployed(city)["nbr_unemployed"] * 100) / stats["population"])) + "%"
+        stats["Job_Offer_in_Departement"] = worker.get_job_offer_in_dep(stats["departement"])["job_offer"]
+
     for key, value in stats.items() :
         print(key, ":", value)
         if key == "type_ville" :

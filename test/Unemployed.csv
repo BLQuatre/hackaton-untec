@@ -1,7 +1,4 @@
-﻿Source : France Travail - STMT, Données brutes
-Demandeurs d’emploi inscrits en fin de mois à France Travail par Commune de plus de 5000 hab. - France entière - Avril 2025 - Données brutes
-https://statistiques.francetravail.org/stmt/defm?nk=0&pp=las&ss=1
-Commune de plus de 5000 hab.;Nombre de demandeurs d'emploi
+﻿Commune;nbr
 Abbeville 80100; 3 370
 Ablon-sur-Seine 94480;  520
 Achères 78260; 2 480
