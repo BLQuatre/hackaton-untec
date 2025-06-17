@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import Image from "next/image"
 
 import { useState, useEffect, useRef } from "react"
 import axios from "axios"
@@ -8,19 +9,20 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MapPin, School, Moon, Sun, Search, ArrowLeft, Loader2, Navigation } from "lucide-react"
-import { twMerge } from "tailwind-merge"
+import { MapPin, Moon, Sun, Search, ArrowLeft, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { useLanguage } from "@/contexts/LanguageContext"
 
+interface Coords {
+	lat: number
+	lon: number
+}
+
 interface LocationData {
 	name: string
 	region: string
-	coordinates: {
-		lat: number
-		lon: number
-	}
+	coordinates: Coords
 	utility_data: {
 		population: string
 		elevation: string
@@ -33,13 +35,13 @@ interface AutocompleteSuggestion {
 	id: number
 	type: "city" | "street" | "landmark" | "coordinates"
 	fullAddress: string
-	coordinates?: { lat: number; lon: number }
+	coordinates?: Coords
 }
 
 // App states
 type AppState = "search" | "loading" | "results"
 // Search methods
-type SearchMethod = "address" | "map" | "coordinates"
+type SearchMethod = "address" | "coordinates"
 
 export default function HackathonApp() {
 	const { t } = useLanguage()
@@ -47,7 +49,10 @@ export default function HackathonApp() {
 	// App state management
 	const [appState, setAppState] = useState<AppState>("search")
 	const [darkMode, setDarkMode] = useState(false)
+
 	// Search data
+	const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(null)
+
 	const [rawAddress, setRawAddress] = useState("")
 	const [address, setAddress] = useState("")
 	const [locationData, setLocationData] = useState<LocationData | null>(null)
@@ -80,7 +85,8 @@ export default function HackathonApp() {
 
 	// Handle input change and show suggestions
 	const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value
+		const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, '')
+
 		if (address !== value)
 			setAddress("")
 		setRawAddress(value)
@@ -104,6 +110,11 @@ export default function HackathonApp() {
 		const suggestions = []
 		for (let i = 0; i < Math.min(data.length, 10); i++) {
 			const feature = data[i]
+
+			if (feature.kind !== "housenumber" && feature.kind !== "street")
+				continue
+
+			console.log("Feature:", feature)
 
 			suggestions.push({
 				id: i,
@@ -150,7 +161,7 @@ export default function HackathonApp() {
 	// Handle search
 	const handleSearch = async () => {
 		if ((searchMethod === "address" && !address.trim()) ||
-			((searchMethod === "map" || searchMethod === "coordinates") && !selectedPoint)) return
+			(searchMethod === "coordinates" && !selectedPoint)) return
 
 		setAppState("loading")
 		setError("")
@@ -181,114 +192,6 @@ export default function HackathonApp() {
 		setSuggestions([])
 	}
 
-	const handleMapClick = (e: React.MouseEvent<HTMLCanvasElement>) => {
-		const canvas = e.currentTarget
-		const rect = canvas.getBoundingClientRect()
-		const x = e.clientX - rect.left
-		const y = e.clientY - rect.top
-
-		const lat = 49.7 - (y / canvas.height) * 0.4
-		const lon = -0.3 + (x / canvas.width) * 0.8
-
-		setSelectedPoint({ lat, lon })
-	}
-
-	// Draw map on canvas
-	const drawMap = (canvas: HTMLCanvasElement) => {
-		const ctx = canvas.getContext("2d")
-		if (!ctx) return
-
-		const { width, height } = canvas
-
-		// Clear canvas
-		ctx.fillStyle = darkMode ? "#1f2937" : "#e5f3ff"
-		ctx.fillRect(0, 0, width, height)
-
-		// Draw grid
-		ctx.strokeStyle = darkMode ? "#374151" : "#cbd5e1"
-		ctx.lineWidth = 1
-
-		// Vertical lines
-		for (let i = 0; i <= 10; i++) {
-			const x = (i / 10) * width
-			ctx.beginPath()
-			ctx.moveTo(x, 0)
-			ctx.lineTo(x, height)
-			ctx.stroke()
-		}
-
-		// Horizontal lines
-		for (let i = 0; i <= 10; i++) {
-			const y = (i / 10) * height
-			ctx.beginPath()
-			ctx.moveTo(0, y)
-			ctx.lineTo(width, y)
-			ctx.stroke()
-		}
-
-		// Draw coastline simulation
-		ctx.strokeStyle = darkMode ? "#3b82f6" : "#2563eb"
-		ctx.lineWidth = 3
-		ctx.beginPath()
-		ctx.moveTo(0, height * 0.6)
-		ctx.quadraticCurveTo(width * 0.3, height * 0.4, width * 0.7, height * 0.5)
-		ctx.quadraticCurveTo(width * 0.9, height * 0.6, width, height * 0.7)
-		ctx.stroke()
-
-		// Draw cities
-		const cities = [
-			{ x: width * 0.2, y: height * 0.3, name: "Le Havre" },
-			{ x: width * 0.6, y: height * 0.4, name: "Rouen" },
-			{ x: width * 0.8, y: height * 0.8, name: "Paris" },
-		]
-
-		cities.forEach((city) => {
-			ctx.fillStyle = darkMode ? "#fbbf24" : "#f59e0b"
-			ctx.beginPath()
-			ctx.arc(city.x, city.y, 4, 0, 2 * Math.PI)
-			ctx.fill()
-
-			ctx.fillStyle = darkMode ? "#f3f4f6" : "#1f2937"
-			ctx.font = "12px sans-serif"
-			ctx.fillText(city.name, city.x + 8, city.y - 8)
-		})
-
-		// Draw selected point
-		if (selectedPoint) {
-			const x = ((selectedPoint.lon + 0.3) / 0.8) * width
-			const y = ((49.7 - selectedPoint.lat) / 0.4) * height
-
-			ctx.fillStyle = "#ef4444"
-			ctx.beginPath()
-			ctx.arc(x, y, 6, 0, 2 * Math.PI)
-			ctx.fill()
-
-			ctx.strokeStyle = "#ffffff"
-			ctx.lineWidth = 2
-			ctx.stroke()
-
-			ctx.fillStyle = darkMode ? "#f3f4f6" : "#1f2937"
-			ctx.font = "10px monospace"
-			ctx.fillText(`${selectedPoint.lat.toFixed(4)}, ${selectedPoint.lon.toFixed(4)}`, x + 10, y - 10)
-		}
-
-		// Draw coordinate labels
-		ctx.fillStyle = darkMode ? "#9ca3af" : "#6b7280"
-		ctx.font = "10px monospace"
-
-		for (let i = 0; i <= 4; i++) {
-			const lat = 49.7 - (i / 4) * 0.4
-			const y = (i / 4) * height
-			ctx.fillText(lat.toFixed(2), 5, y + 15)
-		}
-
-		for (let i = 0; i <= 4; i++) {
-			const lon = -0.3 + (i / 4) * 0.8
-			const x = (i / 4) * width
-			ctx.fillText(lon.toFixed(2), x + 5, height - 5)
-		}
-	}
-
 	const getSuggestionIcon = (type: AutocompleteSuggestion["type"]) => {
 		switch (type) {
 			case "city":
@@ -315,46 +218,73 @@ export default function HackathonApp() {
 		setLatInput("")
 		setLonInput("")
 	}
-
 	return (
 		<div
-			className={`min-h-screen transition-all duration-300 ease-in-out ${
-				darkMode ? "dark bg-gray-900" : "bg-gradient-to-br from-blue-50 to-indigo-100"
+			className={`min-h-screen transition-all duration-300 ease-in-out relative overflow-hidden ${
+				darkMode
+					? "dark bg-gradient-to-br from-gray-900 via-purple-900 to-blue-900"
+					: "bg-gradient-to-br from-blue-50 via-purple-50 to-indigo-100"
 			}`}
-		>			{/* Header */}
-			<header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-all duration-300 animate-in slide-in-from-top-4">
-				<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+		>
+			{/* Header */}
+			<header className="bg-white/70 dark:bg-gray-900/70 backdrop-blur-xl border-b border-white/30 dark:border-gray-700/30 transition-all duration-500 animate-in slide-in-from-top-4 relative z-10 shadow-lg shadow-blue-500/5 dark:shadow-purple-500/10">
+				{/* Subtle gradient overlay */}
+				<div className="absolute inset-0 bg-gradient-to-r from-blue-50/30 via-purple-50/20 to-indigo-50/30 dark:from-blue-900/20 dark:via-purple-800/10 dark:to-indigo-900/20 pointer-events-none" />
+
+				<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-3 relative">
 					<div className="flex items-center justify-between">
-						<div className="flex items-center space-x-4">
-							<School className="h-8 w-8 text-blue-600 dark:text-blue-400" />
-							<div>
-								<h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('app.title')}</h1>
-								<p className="text-sm text-gray-600 dark:text-gray-300">{t('app.description')}</p>
+						{/* Logo and Title Section */}
+						<div className="flex items-center space-x-3 group">
+							<div className="relative group-hover:scale-105 transition-all duration-300">
+								<Image
+									src="/images/logo.png"
+									alt="Logo"
+									width={40}
+									height={40}
+									className="rounded-lg shadow-md group-hover:shadow-lg transition-all duration-300"
+								/>
+							</div>
+							<div className="space-y-0.5">
+								<h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105">
+									{t('app.title')}
+								</h1>
+								<p className="text-xs text-gray-600 dark:text-gray-400 font-medium opacity-80 group-hover:opacity-100 transition-all duration-300">
+									{t('app.description')}
+								</p>
 							</div>
 						</div>
-						<div className="flex items-center space-x-4">
-							<LanguageSwitcher />
+
+						{/* Controls Section */}
+						<div className="flex items-center space-x-3">
+							<div>
+								<LanguageSwitcher />
+							</div>
+
 							<Button
 								variant="outline"
 								size="sm"
 								onClick={toggleDarkMode}
-								className="dark:border-gray-600 dark:text-gray-300 transition-all duration-300 hover:scale-105 cursor-pointer"
+								className="relative overflow-hidden bg-white/60 dark:bg-gray-800/60 backdrop-blur-sm border border-white/40 dark:border-gray-600/40 hover:border-blue-300 dark:hover:border-purple-400 text-gray-700 dark:text-gray-300 hover:text-blue-600 dark:hover:text-purple-400 transition-all duration-300 hover:scale-110 hover:shadow-lg hover:shadow-blue-500/20 dark:hover:shadow-purple-500/20 cursor-pointer group"
 							>
-								{darkMode ? (
-									<Sun className="h-4 w-4 transition-transform duration-300" />
-								) : (
-									<Moon className="h-4 w-4 transition-transform duration-300" />
-								)}
+								<div className="absolute inset-0 bg-gradient-to-r from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+								<div className="relative flex items-center justify-center">
+									{darkMode ? (
+										<Sun className="h-4 w-4 transition-all duration-300 group-hover:rotate-180 group-hover:scale-110" />
+									) : (
+										<Moon className="h-4 w-4 transition-all duration-300 group-hover:rotate-12 group-hover:scale-110" />
+									)}
+								</div>
 							</Button>
 						</div>
 					</div>
 				</div>
 			</header>
 
-			<main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+			<main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 relative z-10">
 				{/* Search State */}
 				{appState === "search" && (
-					<div className="space-y-8 animate-in fade-in-0 duration-300">						<div className="text-center animate-in slide-in-from-bottom-4 duration-300">
+					<div className="space-y-8 animate-in fade-in-0 duration-300">
+						<div className="text-center animate-in slide-in-from-bottom-4 duration-300">
 							<h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
 								{t('search.title')}
 							</h2>
@@ -363,7 +293,7 @@ export default function HackathonApp() {
 							</p>
 						</div>
 
-						<Card className="dark:bg-gray-800 dark:border-gray-700">
+						<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl">
 							<CardHeader>
 								<CardTitle className="dark:text-white">Search Methods</CardTitle>
 								<CardDescription className="dark:text-gray-300">
@@ -375,7 +305,8 @@ export default function HackathonApp() {
 									value={searchMethod}
 									onValueChange={(value) => setSearchMethod(value as SearchMethod)}
 									className="transition-all duration-300"
-								>									<TabsList className="grid w-full grid-cols-3 transition-all duration-300">
+								>
+									<TabsList className="grid w-full grid-cols-2 transition-all duration-300">
 										<TabsTrigger
 											value="address"
 											className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
@@ -390,17 +321,11 @@ export default function HackathonApp() {
 											<MapPin className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
 											<span>{t('search.methods.coordinates')}</span>
 										</TabsTrigger>
-										<TabsTrigger
-											value="map"
-											className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer	"
-										>
-											<Navigation className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-											<span>{t('search.methods.map')}</span>
-										</TabsTrigger>
 									</TabsList>
 
 									<TabsContent value="address" className="space-y-4 mt-6 animate-in slide-in-from-left-4 duration-300">
-										<div className="relative">											<Input
+										<div className="relative">
+											<Input
 												ref={inputRef}
 												type="text"
 												placeholder={t('search.placeholder')}
@@ -412,10 +337,10 @@ export default function HackathonApp() {
 											/>
 											<Search
 												className={cn("absolute right-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400 transition-all duration-300",
-													(searchMethod === "address" && address.trim()) || (searchMethod === "map" && selectedPoint) ? "hover:text-primary hover:scale-[1.02] cursor-pointer" : "cursor-not-allowed"
+													(searchMethod === "address" && address.trim()) || (searchMethod === "coordinates" && selectedPoint) ? "hover:text-primary hover:scale-[1.02] cursor-pointer" : "cursor-not-allowed"
 												)}
 												onClick={() => {
-													if ((searchMethod === "address" && address.trim()) || (searchMethod === "map" && selectedPoint))
+													if ((searchMethod === "address" && address.trim()) || (searchMethod === "coordinates" && selectedPoint))
 														handleSearch();
 												}}
 											/>
@@ -424,7 +349,7 @@ export default function HackathonApp() {
 											{showSuggestions && suggestions.length > 0 && (
 												<div
 													ref={suggestionsRef}
-													className="absolute z-50 w-full mt-1 bg-white dark:bg-gray-800 border dark:border-gray-600 rounded-md shadow-lg max-h-64 overflow-y-auto animate-in slide-in-from-top-2 duration-300"
+													className="absolute z-50 w-full mt-1 bg-white/90 dark:bg-gray-800/90 backdrop-blur-md border border-white/30 dark:border-gray-600/50 rounded-md shadow-xl max-h-64 overflow-y-auto animate-in slide-in-from-top-2 duration-300"
 												>
 													{suggestions.map((suggestion, index) => (
 														<div
@@ -459,7 +384,7 @@ export default function HackathonApp() {
 										</div>
 									</TabsContent>
 
-									<TabsContent value="coordinates" className="space-y-4 mt-6 animate-in slide-in-from-bottom-4 duration-300">
+									<TabsContent value="coordinates" className="space-y-4 mt-6 animate-in slide-in-from-right-4 duration-300">
 										<div className="grid grid-cols-2 gap-4">
 											<div>
 												<label htmlFor="latitude" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -521,36 +446,6 @@ export default function HackathonApp() {
 											</p>
 										</div>
 									</TabsContent>
-
-									<TabsContent value="map" className="space-y-4 mt-6 animate-in slide-in-from-right-4 duration-300">
-										<div className="text-center mb-4">
-											<p className="text-gray-600 dark:text-gray-300">Click anywhere on the map to select a location</p>
-											{selectedPoint && (
-												<p className="text-sm text-blue-600 dark:text-blue-400 mt-2">
-													Selected: {selectedPoint.lat.toFixed(4)}, {selectedPoint.lon.toFixed(4)}
-												</p>
-											)}
-										</div>
-
-										<div className="relative mx-auto max-w-lg">
-											<canvas
-												ref={(canvas) => {
-													if (canvas) {
-														canvas.width = 500
-														canvas.height = 400
-														drawMap(canvas)
-													}
-												}}
-												width={500}
-												height={400}
-												className="w-full h-80 border-2 border-dashed border-gray-300 dark:border-gray-600 hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-300 cursor-crosshair rounded-lg hover:shadow-lg hover:scale-[1.01]"
-												onClick={handleMapClick}
-											/>
-											<div className="absolute bottom-2 right-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded">
-												Le Havre Region
-											</div>
-										</div>
-									</TabsContent>
 								</Tabs>
 
 								{error && (
@@ -562,7 +457,7 @@ export default function HackathonApp() {
 									onClick={handleSearch}
 									disabled={
 										(searchMethod === "address" && !address.trim()) ||
-										((searchMethod === "map" || searchMethod === "coordinates") && !selectedPoint)
+										(searchMethod === "coordinates" && !selectedPoint)
 									}
 									className="w-full mt-6 py-6 text-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none disabled:cursor-not-allowed"
 									size="lg"
@@ -581,7 +476,8 @@ export default function HackathonApp() {
 						<div className="relative animate-in zoom-in-50 duration-300">
 							<Loader2 className="h-16 w-16 animate-spin text-blue-600 dark:text-blue-400" />
 							<div className="absolute inset-0 rounded-full border-4 border-blue-200 dark:border-blue-800 animate-pulse"></div>
-						</div>						<div className="text-center space-y-2 animate-in slide-in-from-bottom-4 duration-300 delay-300">
+						</div>
+						<div className="text-center space-y-2 animate-in slide-in-from-bottom-4 duration-300 delay-300">
 							<h3 className="text-2xl font-semibold text-gray-900 dark:text-white animate-in slide-in-from-left-4 duration-300 delay-300">
 								{t('loading')}
 							</h3>
@@ -602,7 +498,8 @@ export default function HackathonApp() {
 					<div className="space-y-6 animate-in fade-in-0 duration-300">						<div className="flex items-center justify-between animate-in slide-in-from-top-4 duration-300">
 							<h2 className="text-3xl font-bold text-gray-900 dark:text-white animate-in slide-in-from-left-6 duration-300">
 								{t('results.title')}
-							</h2><Button
+							</h2>
+							<Button
 								variant="outline"
 								onClick={resetSearch}
 								className="flex items-center space-x-2 transition-all hover:scale-105 hover:shadow-md cursor-pointer dark:text-white"
@@ -612,7 +509,7 @@ export default function HackathonApp() {
 							</Button>
 						</div>
 
-						<Card className="dark:bg-gray-800 dark:border-gray-700 animate-in slide-in-from-bottom-6 duration-300 hover:shadow-xl transition-all">
+						<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl animate-in slide-in-from-bottom-6 duration-300 hover:shadow-2xl transition-all">
 							<CardHeader>
 								<CardTitle className="dark:text-white">Location Information</CardTitle>
 								<CardDescription className="dark:text-gray-300">
