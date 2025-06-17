@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
+import { LanguageProvider } from '@/contexts/LanguageContext'
 
 export const metadata: Metadata = {
 	title: 'Hackaton UNTEC',
@@ -13,7 +14,11 @@ export default function RootLayout({
 }>) {
 	return (
 		<html lang="en">
-			<body>{children}</body>
+			<body>
+				<LanguageProvider>
+					{children}
+				</LanguageProvider>
+			</body>
 		</html>
 	)
 }

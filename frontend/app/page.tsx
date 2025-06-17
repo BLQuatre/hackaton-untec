@@ -11,6 +11,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MapPin, School, Moon, Sun, Search, ArrowLeft, Loader2, Navigation } from "lucide-react"
 import { twMerge } from "tailwind-merge"
 import { cn } from "@/lib/utils"
+import { LanguageSwitcher } from "@/components/LanguageSwitcher"
+import { useLanguage } from "@/contexts/LanguageContext"
 
 interface LocationData {
 	name: string
@@ -40,6 +42,8 @@ type AppState = "search" | "loading" | "results"
 type SearchMethod = "address" | "map" | "coordinates"
 
 export default function HackathonApp() {
+	const { t } = useLanguage()
+
 	// App state management
 	const [appState, setAppState] = useState<AppState>("search")
 	const [darkMode, setDarkMode] = useState(false)
@@ -317,19 +321,19 @@ export default function HackathonApp() {
 			className={`min-h-screen transition-all duration-300 ease-in-out ${
 				darkMode ? "dark bg-gray-900" : "bg-gradient-to-br from-blue-50 to-indigo-100"
 			}`}
-		>
-			{/* Header */}
+		>			{/* Header */}
 			<header className="bg-white dark:bg-gray-800 shadow-sm border-b dark:border-gray-700 transition-all duration-300 animate-in slide-in-from-top-4">
 				<div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
 					<div className="flex items-center justify-between">
 						<div className="flex items-center space-x-4">
 							<School className="h-8 w-8 text-blue-600 dark:text-blue-400" />
 							<div>
-								<h1 className="text-2xl font-bold text-gray-900 dark:text-white">Hackaton 2025</h1>
-								<p className="text-sm text-gray-600 dark:text-gray-300">42 Le Havre × UNTEC</p>
+								<h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t('app.title')}</h1>
+								<p className="text-sm text-gray-600 dark:text-gray-300">{t('app.description')}</p>
 							</div>
 						</div>
 						<div className="flex items-center space-x-4">
+							<LanguageSwitcher />
 							<Button
 								variant="outline"
 								size="sm"
@@ -350,13 +354,12 @@ export default function HackathonApp() {
 			<main className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				{/* Search State */}
 				{appState === "search" && (
-					<div className="space-y-8 animate-in fade-in-0 duration-300">
-						<div className="text-center animate-in slide-in-from-bottom-4 duration-300">
+					<div className="space-y-8 animate-in fade-in-0 duration-300">						<div className="text-center animate-in slide-in-from-bottom-4 duration-300">
 							<h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-								Discover Any Location
+								{t('search.title')}
 							</h2>
 							<p className="text-lg text-gray-600 dark:text-gray-300">
-								Choose your preferred search method to explore places around France
+								{t('search.description')}
 							</p>
 						</div>
 
@@ -372,37 +375,35 @@ export default function HackathonApp() {
 									value={searchMethod}
 									onValueChange={(value) => setSearchMethod(value as SearchMethod)}
 									className="transition-all duration-300"
-								>
-									<TabsList className="grid w-full grid-cols-3 transition-all duration-300">
+								>									<TabsList className="grid w-full grid-cols-3 transition-all duration-300">
 										<TabsTrigger
 											value="address"
 											className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
 										>
 											<Search className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-											<span>Address Search</span>
+											<span>{t('search.methods.address')}</span>
 										</TabsTrigger>
 										<TabsTrigger
 											value="coordinates"
 											className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
 										>
 											<MapPin className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-											<span>Coordinates</span>
+											<span>{t('search.methods.coordinates')}</span>
 										</TabsTrigger>
 										<TabsTrigger
 											value="map"
 											className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer	"
 										>
 											<Navigation className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-											<span>Interactive Map</span>
+											<span>{t('search.methods.map')}</span>
 										</TabsTrigger>
 									</TabsList>
 
 									<TabsContent value="address" className="space-y-4 mt-6 animate-in slide-in-from-left-4 duration-300">
-										<div className="relative">
-											<Input
+										<div className="relative">											<Input
 												ref={inputRef}
 												type="text"
-												placeholder="Try: 'rou', 'champs', 'le hav', or '49.4944, 0.1079'"
+												placeholder={t('search.placeholder')}
 												value={rawAddress}
 												onChange={handleInputChange}
 												onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
@@ -566,7 +567,7 @@ export default function HackathonApp() {
 									size="lg"
 								>
 									<Search className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:rotate-12" />
-									Search Location
+									{t('search.button')}
 								</Button>
 							</CardContent>
 						</Card>
@@ -579,13 +580,12 @@ export default function HackathonApp() {
 						<div className="relative animate-in zoom-in-50 duration-300">
 							<Loader2 className="h-16 w-16 animate-spin text-blue-600 dark:text-blue-400" />
 							<div className="absolute inset-0 rounded-full border-4 border-blue-200 dark:border-blue-800 animate-pulse"></div>
-						</div>
-						<div className="text-center space-y-2 animate-in slide-in-from-bottom-4 duration-300 delay-300">
+						</div>						<div className="text-center space-y-2 animate-in slide-in-from-bottom-4 duration-300 delay-300">
 							<h3 className="text-2xl font-semibold text-gray-900 dark:text-white animate-in slide-in-from-left-4 duration-300 delay-300">
-								Searching Location...
+								{t('loading')}
 							</h3>
 							<p className="text-gray-600 dark:text-gray-300 animate-in slide-in-from-right-4 duration-300 delay-300">
-								Gathering location data and information
+								{t('search.description')}
 							</p>
 						</div>
 						<div className="flex space-x-1 animate-in slide-in-from-bottom-2 duration-300 delay-300">
@@ -598,18 +598,16 @@ export default function HackathonApp() {
 
 				{/* Results State */}
 				{appState === "results" && locationData && (
-					<div className="space-y-6 animate-in fade-in-0 duration-300">
-						<div className="flex items-center justify-between animate-in slide-in-from-top-4 duration-300">
+					<div className="space-y-6 animate-in fade-in-0 duration-300">						<div className="flex items-center justify-between animate-in slide-in-from-top-4 duration-300">
 							<h2 className="text-3xl font-bold text-gray-900 dark:text-white animate-in slide-in-from-left-6 duration-300">
-								Location Results
-							</h2>
-							<Button
+								{t('results.title')}
+							</h2><Button
 								variant="outline"
 								onClick={resetSearch}
 								className="flex items-center space-x-2 transition-all hover:scale-105 hover:shadow-md cursor-pointer dark:text-white"
 							>
 								<ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-								<span>Search Again</span>
+								<span>{t('results.back')}</span>
 							</Button>
 						</div>
 
@@ -657,22 +655,21 @@ export default function HackathonApp() {
 								<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 hover:scale-[1.01] transition-all">
 									<h4 className="text-xl font-semibold text-green-900 dark:text-green-100 mb-4">
 										Location Details
-									</h4>
-									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+									</h4>									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 										<div className="animate-in slide-in-from-bottom-2 transition-all">
-											<p className="text-sm font-medium text-green-800 dark:text-green-200">Population</p>
+											<p className="text-sm font-medium text-green-800 dark:text-green-200">{t('results.population')}</p>
 											<p className="text-lg text-green-700 dark:text-green-300">
 												{locationData.utility_data.population}
 											</p>
 										</div>
 										<div className="animate-in slide-in-from-bottom-2 transition-all">
-											<p className="text-sm font-medium text-green-800 dark:text-green-200">Elevation</p>
+											<p className="text-sm font-medium text-green-800 dark:text-green-200">{t('results.elevation')}</p>
 											<p className="text-lg text-green-700 dark:text-green-300">
 												{locationData.utility_data.elevation}
 											</p>
 										</div>
 										<div className="animate-in slide-in-from-bottom-2 transition-all">
-											<p className="text-sm font-medium text-green-800 dark:text-green-200">Timezone</p>
+											<p className="text-sm font-medium text-green-800 dark:text-green-200">{t('results.timezone')}</p>
 											<p className="text-lg text-green-700 dark:text-green-300">{locationData.utility_data.timezone}</p>
 										</div>
 									</div>
