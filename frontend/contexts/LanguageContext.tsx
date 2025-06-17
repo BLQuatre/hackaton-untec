@@ -17,7 +17,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 const translations = {
   en: {
     // App titles
-    'app.title': 'UNTEC Hackathon',
+    'app.title': 'Costia',
     'app.description': '42 Le Havre X UNTEC',
 
     // Search section
@@ -45,7 +45,7 @@ const translations = {
   },
   fr: {
     // App titles
-    'app.title': 'Hackathon UNTEC',
+    'app.title': 'Costia',
     'app.description': '42 Le Havre X UNTEC',
 
     // Search section

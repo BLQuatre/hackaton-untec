@@ -3,7 +3,7 @@ import './globals.css'
 import { LanguageProvider } from '@/contexts/LanguageContext'
 
 export const metadata: Metadata = {
-	title: 'Hackaton UNTEC',
+	title: 'Costia',
 	description: '42 Le Havre X UNTEC'
 }
 
