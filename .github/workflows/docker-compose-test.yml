@@ -18,6 +18,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
+      - name: Create Docker Compose compatibility script
+        run: |
+          # Create a script to use 'docker compose' instead of 'docker-compose'
+          echo '#!/bin/bash
+          docker compose "$@"' > docker-compose
+          chmod +x docker-compose
+          sudo mv docker-compose /usr/local/bin/
+          echo "Created docker-compose compatibility wrapper"
+
       - name: Create .env file
         run: |
           echo "BACKEND_PORT=8000" > .env
@@ -25,14 +34,16 @@ jobs:
 
       - name: Start application with Docker Compose
         run: |
-          chmod +x ./start.sh
-          ./start.sh
+          # Use docker compose directly instead of the script
+          docker compose down
+          docker compose up --build -d
+          echo "Application started"
 
       - name: Display Docker container status after startup
         run: |
           echo "Initial container status:"
-          docker-compose ps
-          docker-compose logs --tail=50
+          docker compose ps
+          docker compose logs --tail=50
 
       - name: Wait for services to be ready
         run: |
@@ -60,15 +71,15 @@ jobs:
           curl -s http://localhost:3000 || true
 
       - name: Display Docker container status
-        run: docker-compose ps
+        run: docker compose ps
 
       - name: Check container logs if test fails
         if: failure()
         run: |
           echo "Docker Compose Logs:"
-          docker-compose logs
+          docker compose logs
 
       - name: Stop application
         run: |
-          chmod +x ./stop.sh
-          ./stop.sh
+          docker compose down
+          echo "All containers have been stopped."
