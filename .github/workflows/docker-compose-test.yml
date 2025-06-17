@@ -1,0 +1,63 @@
+name: Docker Compose Test
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  test-docker-compose:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Create .env file
+        run: |
+          echo "BACKEND_PORT=8000" > .env
+          echo "FRONTEND_PORT=3000" >> .env
+      
+      - name: Start application with Docker Compose
+        run: |
+          chmod +x ./start.sh
+          ./start.sh
+      
+      - name: Wait for services to be ready
+        run: |
+          # Wait for backend to be available (timeout after 60 seconds)
+          timeout 60 bash -c 'until curl -s --head --fail http://localhost:8000; do sleep 2; done'
+          echo "Backend is up and running"
+          
+          # Wait for frontend to be available (timeout after 60 seconds)
+          timeout 60 bash -c 'until curl -s --head --fail http://localhost:3000; do sleep 2; done'
+          echo "Frontend is up and running"
+      
+      - name: Test backend API connection
+        run: |
+          # Basic test to check if backend responds
+          curl -s http://localhost:8000 || true
+      
+      - name: Test frontend connection
+        run: |
+          # Basic test to check if frontend responds
+          curl -s http://localhost:3000 || true
+      
+      - name: Display Docker container status
+        run: docker-compose ps
+      
+      - name: Check container logs if test fails
+        if: failure()
+        run: |
+          echo "Docker Compose Logs:"
+          docker-compose logs
+      
+      - name: Stop application
+        run: |
+          chmod +x ./stop.sh
+          ./stop.sh
