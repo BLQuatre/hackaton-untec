@@ -557,7 +557,8 @@ export default function HackathonApp() {
 									<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mt-4">
 										<p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
 									</div>
-								)}								<Button
+								)}
+								<Button
 									onClick={handleSearch}
 									disabled={
 										(searchMethod === "address" && !address.trim()) ||
