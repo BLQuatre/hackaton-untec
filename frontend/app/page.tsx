@@ -636,7 +636,8 @@ export default function HackathonApp() {
 									<div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-md p-4 mt-4">
 										<p className="text-red-800 dark:text-red-200 text-sm">{error}</p>
 									</div>
-								)}								<Button
+								)}
+								<Button
 									onClick={handleSearch}
 									disabled={!coords && !address.trim()}
 									className="w-full mt-6 py-6 text-lg transition-all duration-300 hover:scale-[1.02] cursor-pointer hover:shadow-lg disabled:hover:scale-100 disabled:hover:shadow-none disabled:cursor-not-allowed"
