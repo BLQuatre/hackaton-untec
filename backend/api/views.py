@@ -9,10 +9,14 @@ import os
 from django.conf import settings
 
 # Import our data processing modules
-from citysize import get_commune_info, categorize_city
-from worker import get_unemployed_data, get_job_offers_in_department
-from utils import geocode_address, get_city_from_coordinates
-from OpenStreetMapGetter import Costia_getData_with_coordinates
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lib'))
+
+from lib.citysize import get_commune_info, categorie_ville
+from lib.worker import get_unemployed, get_job_offer_in_dep
+from lib.utils import geocode_adresse, get_city_from_coords
+from lib.OpenStreetMapGetter import Costia_getData_with_coordinates
 from .serializers import CitySearchResultSerializer
 
 # Create your views here.

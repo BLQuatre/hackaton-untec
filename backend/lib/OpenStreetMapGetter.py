@@ -1,10 +1,10 @@
-import citysize
+from . import citysize
 import requests
-import worker
-import school
-import utils
+from . import worker
+from . import school
+from . import utils
 from io import StringIO
-# import TxttoPDF
+# from . import TxttoPDF
 
 def get_infos_nearby(lat, lon, info_type, info_filters=None, radius=500):
 	infos = []

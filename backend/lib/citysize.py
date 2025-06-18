@@ -12,7 +12,7 @@ def categorie_ville(population, densite):
 	else:
 		return "tres grande ville"
 
-def get_commune_info(nom_ville, csv_path="communes-france-2025.csv"):
+def get_commune_info(nom_ville, csv_path="../data/raw/communes-france-2025.csv"):
 	df = pd.read_csv(csv_path, sep=None, engine='python')
 	def normalize(s):
 		if pd.isna(s):
