@@ -19,7 +19,7 @@ def geocode_adresse(adresse):
     if data["features"]:
         coords = data["features"][0]["geometry"]["coordinates"]  # [lon, lat]
         return coords[1], coords[0]
-    return None
+    return None, None
 
 def get_city_from_coords(lat, lon):
     url = "https://api-adresse.data.gouv.fr/reverse/"
