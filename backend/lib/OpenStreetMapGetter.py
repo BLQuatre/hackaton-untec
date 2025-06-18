@@ -1,394 +1,262 @@
-"""
-Module for retrieving information from OpenStreetMap using Overpass API.
-"""
 import citysize
 import requests
 import worker
+import school
 import utils
-from typing import List, Dict, Optional, Any, Tuple
-
-
-class CityQueryConfig:
-    """Configuration for different city types with their search parameters."""
-
-    CONFIGS = {
-        citysize.CityCategory.VERY_LARGE_CITY: [
-            ("amenity", ["restaurant", "fast_food"], "Shop", 500),
-            ("shop", ["supermarket"], "Food Store", 300),
-            ("amenity", ["hospital", "clinic"], "Healthcare", 1000),
-            ("amenity", ["police", "fire_station"], "Public Services", 2000),
-            ("amenity", ["school"], "School", 500),
-        ],
-        citysize.CityCategory.LARGE_CITY: [
-            ("amenity", ["restaurant", "fast_food"], "Shop", 1000),
-            ("shop", ["supermarket"], "Food Store", 500),
-            ("amenity", ["hospital", "clinic"], "Healthcare", 2000),
-            ("amenity", ["police", "fire_station"], "Public Services", 3000),
-            ("amenity", ["school"], "School", 1000),
-            ("highway", ["bus_stop"], "Transport", 1000),
-            ("station", ["subway"], "Transport", 1000),
-            ("railway", ["tram_stop"], "Transport", 1000),
-            ("railway", ["station"], "Train Station", 1000),
-        ],
-        citysize.CityCategory.MEDIUM_TOWN: [
-            ("amenity", ["restaurant", "fast_food"], "Shop", 2000),
-            ("shop", ["supermarket"], "Food Store", 0),
-            ("amenity", ["hospital", "clinic"], "Healthcare", 0),
-            ("amenity", ["police", "fire_station"], "Public Services", 5000),
-            ("amenity", ["school"], "School", 0),
-        ],
-        citysize.CityCategory.SMALL_TOWN: [
-            ("amenity", ["restaurant", "fast_food"], "Shop", 3000),
-            ("shop", ["supermarket"], "Food Store", 2000),
-            ("amenity", ["hospital", "clinic"], "Healthcare", 5000),
-            ("amenity", ["police", "fire_station"], "Public Services", 5000),
-            ("amenity", ["school"], "School", 3000),
-        ],
-        citysize.CityCategory.VILLAGE: [
-            ("amenity", ["restaurant", "fast_food"], "Shop", 5000),
-            ("shop", ["supermarket"], "Food Store", 5000),
-            ("amenity", ["hospital", "clinic"], "Healthcare", 10000),
-            ("amenity", ["police", "fire_station"], "Public Services", 10000),
-            ("amenity", ["school"], "School", 5000),
-        ]
-    }
-
-
-def get_nearby_amenities(lat: float, lon: float, amenity_type: str,
-                        amenity_filters: Optional[List[str]] = None,
-                        radius: int = 500) -> List[Dict[str, Any]]:
-    """
-    Get nearby amenities using Overpass API.
-
-    Args:
-        lat: Latitude of the center point
-        lon: Longitude of the center point
-        amenity_type: Type of amenity to search for (e.g., "amenity", "shop")
-        amenity_filters: List of specific amenity values to filter by
-        radius: Search radius in meters
-
-    Returns:
-        List of dictionaries containing amenity information
-    """
-    amenities = []
-    overpass_url = "https://overpass-api.de/api/interpreter"
-    filters = amenity_filters if amenity_filters else [None]
-
-    for amenity_filter in filters:
-        # Build the search filter
-        if amenity_filter:
-            search_filter = f'["{amenity_type}"="{amenity_filter}"]'
-        else:
-            search_filter = f'["{amenity_type}"]'
-
-        # Build the Overpass query
-        query = f"""
-        [out:json][timeout:25];
-        (
-        node{search_filter}(around:{radius},{lat},{lon});
-        way{search_filter}(around:{radius},{lat},{lon});
-        relation{search_filter}(around:{radius},{lat},{lon});
-        );
-        out center;
-        """
-
-        try:
-            response = requests.post(overpass_url, data={"data": query}, timeout=30)
-            response.raise_for_status()
-            data = response.json()
-
-            for element in data.get("elements", []):
-                amenity_info = _extract_amenity_info(element, lat, lon, amenity_type)
-                if amenity_info:
-                    amenities.append(amenity_info)
-
-        except requests.RequestException as e:
-            print(f"Error fetching data from Overpass API: {e}")
-            continue
-
-    return amenities
-
-
-def get_amenities_in_city_area(lat: float, lon: float, city: str, amenity_type: str,
-                              amenity_filters: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    """
-    Get amenities within a city's administrative area.
-
-    Args:
-        lat: Latitude of reference point
-        lon: Longitude of reference point
-        city: City name to get area for
-        amenity_type: Type of amenity to search for
-        amenity_filters: List of specific amenity values to filter by
-
-    Returns:
-        List of dictionaries containing amenity information
-    """
-    area_id = utils.get_openstreetmap_area_id(city)
-    if not area_id:
-        print(f"Could not find area ID for city: {city}")
-        return []
-
-    amenities = []
-    overpass_url = "https://overpass-api.de/api/interpreter"
-    filters = amenity_filters if amenity_filters else [None]
-
-    for amenity_filter in filters:
-        # Build the search filter
-        if amenity_filter:
-            search_filter = f'["{amenity_type}"="{amenity_filter}"]'
-        else:
-            search_filter = f'["{amenity_type}"]'
-
-        # Build the Overpass query for city area
-        query = f"""
-        [out:json][timeout:25];
-        area({area_id})->.searchArea;
-        (
-        node{search_filter}(area.searchArea);
-        way{search_filter}(area.searchArea);
-        relation{search_filter}(area.searchArea);
-        );
-        out center;
-        """
-
-        try:
-            response = requests.post(overpass_url, data={"data": query}, timeout=30)
-            response.raise_for_status()
-            data = response.json()
-
-            for element in data.get("elements", []):
-                amenity_info = _extract_amenity_info(element, lat, lon, amenity_type)
-                if amenity_info:
-                    amenities.append(amenity_info)
-
-        except requests.RequestException as e:
-            print(f"Error fetching data from Overpass API: {e}")
-            continue
-
-    return amenities
-
-
-def _extract_amenity_info(element: Dict[str, Any], ref_lat: float, ref_lon: float,
-                         amenity_type: str) -> Optional[Dict[str, Any]]:
-    """
-    Extract amenity information from an Overpass API element.
-
-    Args:
-        element: Element from Overpass API response
-        ref_lat: Reference latitude for distance calculation
-        ref_lon: Reference longitude for distance calculation
-        amenity_type: Type of amenity
-
-    Returns:
-        Dictionary with amenity information or None if invalid
-    """
-    name = element.get("tags", {}).get("name", "Unknown")
-    type_value = element.get("tags", {}).get(amenity_type, "Other")
-
-    # Get coordinates
-    if "lat" in element and "lon" in element:
-        lat, lon = element["lat"], element["lon"]
-    elif "center" in element:
-        lat, lon = element["center"]["lat"], element["center"]["lon"]
-    else:
-        return None
-
-    # Calculate distance
-    distance = utils.haversine_distance(ref_lat, ref_lon, lat, lon)
-
-    return {
-        "name": name,
-        "type": type_value,
-        "lat": lat,
-        "lon": lon,
-        "distance": distance
-    }
-
-
-def analyze_city_amenities(address: str) -> Dict[str, Any]:
-    """
-    Analyze amenities for a given address based on city type.
-
-    Args:
-        address: Address to analyze
-
-    Returns:
-        Dictionary containing city statistics and amenity analysis
-    """
-    # Get coordinates and city information
-    coordinates = utils.geocode_address(address)
-    if not coordinates:
-        print(f"Could not geocode address: {address}")
-        return {}
-
-    lat, lon = coordinates
-    city = utils.get_city_from_coordinates(lat, lon)
-
-    # Get city statistics
-    city_stats = citysize.get_commune_info(city)
-    if not city_stats:
-        print(f"Could not find city information for: {city}")
-        return {}
-
-    city_stats["type_ville"] = citysize.categorize_city(
-        city_stats['population'],
-        city_stats['densite']
-    )
-
-    # Get query configuration based on city type
-    city_type = city_stats["type_ville"]
-    if city_type not in CityQueryConfig.CONFIGS:
-        print(f"No configuration found for city type: {city_type}")
-        return city_stats
-
-    queries = CityQueryConfig.CONFIGS[city_type]
-
-    # Analyze transport amenities separately
-    transport_stats = _analyze_transport_amenities(lat, lon, city, queries)
-    city_stats.update(transport_stats)
-
-    # Analyze other amenities
-    for amenity_type, amenity_filters, category_name, radius in queries:
-        if category_name == "Transport":
-            continue  # Already handled above
-
-        _analyze_amenity_category(
-            lat, lon, city, amenity_type, amenity_filters,
-            category_name, radius, city_stats
-        )
-
-    # Add unemployment and job data for larger cities
-    if city_stats.get("population", 0) >= 5000:
-        _add_employment_data(city, city_stats)
-
-    return city_stats
-
-
-def _analyze_transport_amenities(lat: float, lon: float, city: str,
-                               queries: List[Tuple]) -> Dict[str, Any]:
-    """Analyze transport amenities and return aggregated statistics."""
-    transport_total_count = 0
-    transport_total_distance = 0
-    transport_radius = 1000
-
-    for amenity_type, amenity_filters, category_name, radius in queries:
-        if category_name != "Transport":
-            continue
-
-        amenities = get_nearby_amenities(lat, lon, amenity_type, amenity_filters, radius)
-
-        for amenity in amenities:
-            transport_total_count += 1
-            transport_total_distance += amenity['distance']
-
-    transport_stats = {}
-    if transport_total_count > 0:
-        transport_average = round(transport_total_distance / transport_total_count, 1)
-        transport_stats.update({
-            "Transport_nbr": transport_total_count,
-            "Transport_radius": transport_radius,
-            "Transport_average_distance": transport_average
-        })
-
-    return transport_stats
-
-
-def _analyze_amenity_category(lat: float, lon: float, city: str, amenity_type: str,
-                            amenity_filters: List[str], category_name: str,
-                            radius: int, city_stats: Dict[str, Any]) -> None:
-    """Analyze a specific category of amenities and update city stats."""
-    print(f"Looking for {category_name}...")
-
-    if radius == 0:
-        amenities = get_amenities_in_city_area(lat, lon, city, amenity_type, amenity_filters)
-        print(f"Searching in city area: {city}")
-    else:
-        amenities = get_nearby_amenities(lat, lon, amenity_type, amenity_filters, radius)
-        print(f"Searching within radius: {radius}m")
-
-    # Calculate statistics
-    count = len(amenities)
-    total_distance = sum(amenity['distance'] for amenity in amenities)
-    average_distance = round(total_distance / count, 1) if count > 0 else 0
-
-    print(f"Found {count} {category_name} facilities, average distance: {average_distance}m\n")
-
-    # Update city stats
-    city_stats[f"{category_name}_nbr"] = count
-    city_stats[f"{category_name}_radius"] = radius
-    city_stats[f"{category_name}_average_distance"] = average_distance
-
-
-def _add_employment_data(city: str, city_stats: Dict[str, Any]) -> None:
-    """Add unemployment and job offer data to city statistics."""
-    try:
-        unemployment_data = worker.get_unemployed_data(city)
-        if unemployment_data:
-            unemployed_count = unemployment_data["nbr_unemployed"]
-            city_stats["Unemployed_people"] = unemployed_count
-
-            population = city_stats.get("population", 0)
-            if population > 0:
-                unemployment_rate = round((unemployed_count * 100) / population, 1)
-                city_stats["Proportion of unemployed"] = f"{unemployment_rate}%"
-
-        job_data = worker.get_job_offers_in_department(city_stats.get("departement", ""))
-        if job_data:
-            city_stats["Job_Offer_in_Departement"] = job_data["job_offer"]
-
-    except Exception as e:
-        print(f"Error getting employment data: {e}")
-
-
-def print_city_analysis(city_stats: Dict[str, Any]) -> None:
-    """Print city analysis results in a formatted way."""
-    for key, value in city_stats.items():
-        print(f"{key}: {value}")
-        if key == "type_ville":
-            print()
-
-
-# Backward compatibility aliases
-def get_infos_nearby(lat: float, lon: float, info_type: str,
-                    info_filters: Optional[List[str]] = None,
-                    radius: int = 500) -> List[Dict[str, Any]]:
-    """Alias for get_nearby_amenities for backward compatibility."""
-    return get_nearby_amenities(lat, lon, info_type, info_filters, radius)
-
-
-def get_infos_in_city_area(lat: float, lon: float, city: str, info_type: str,
-                          info_filters: Optional[List[str]] = None) -> List[Dict[str, Any]]:
-    """Alias for get_amenities_in_city_area for backward compatibility."""
-    return get_amenities_in_city_area(lat, lon, city, info_type, info_filters)
-
-
-# Also update imports to use the new function names
-def categorie_ville(population: int, densite: float) -> str:
-    """Alias for citysize.categorize_city for backward compatibility."""
-    return citysize.categorize_city(population, densite)
-
-
-def get_unemployed(nom_ville: str, csv_path: str = "Unemployed.csv") -> Optional[Dict[str, any]]:
-    """Alias for worker.get_unemployed_data for backward compatibility."""
-    return worker.get_unemployed_data(nom_ville, csv_path)
-
-
-def get_job_offer_in_dep(nom_departement: str, csv_path: str = "JobOffer.csv") -> Optional[Dict[str, any]]:
-    """Alias for worker.get_job_offers_in_department for backward compatibility."""
-    return worker.get_job_offers_in_department(nom_departement, csv_path)
-
+from io import StringIO
+# import TxttoPDF
+
+def get_infos_nearby(lat, lon, info_type, info_filters=None, radius=500):
+	infos = []
+	overpass_url = "https://overpass-api.de/api/interpreter"
+	filters = list(info_filters) if info_filters else [None]
+	for info_filter in filters:
+		if info_filter:
+			search = f'["{info_type}"="{info_filter}"]'
+		else:
+			search = f'["{info_type}"]'
+		query = f"""
+		[out:json][timeout:25];
+		(
+		node{search}(around:{radius},{lat},{lon});
+		way{search}(around:{radius},{lat},{lon});
+		relation{search}(around:{radius},{lat},{lon});
+		);
+		out center;
+		"""
+		response = requests.post(overpass_url, data={"data": query})
+		data = response.json()
+		for element in data.get("elements", []):
+			name = element["tags"].get("name", "Inconnu")
+			type_value = element["tags"].get(info_type, "Autre")
+			if "lat" in element and "lon" in element:
+				lat_info, lon_info = element["lat"], element["lon"]
+			elif "center" in element:
+				lat_info, lon_info = element["center"]["lat"], element["center"]["lon"]
+			else:
+				continue
+			distance = utils.haversine(lat, lon, lat_info, lon_info)
+			infos.append({
+				"name": name,
+				"type": type_value,
+				"lat": lat_info,
+				"lon": lon_info,
+				"distance": distance
+			})
+	return infos
+
+def get_infos_in_city_area(lat, lon, city, info_type, info_filters=None):
+	area_id = utils.get_area_id(city)
+	if not area_id :
+		return
+	infos = []
+	overpass_url = "https://overpass-api.de/api/interpreter"
+	filters = list(info_filters) if info_filters else [None]
+	for info_filter in filters:
+		if info_filter:
+			search = f'["{info_type}"="{info_filter}"]'
+		else:
+			search = f'["{info_type}"]'
+		query = f"""
+		[out:json][timeout:25];
+		area({area_id})->.searchArea;
+		(
+		node{search}(area.searchArea);
+		way{search}(area.searchArea);
+		relation{search}(area.searchArea);
+		);
+		out center;
+		"""
+		response = requests.post(overpass_url, data={"data": query})
+		data = response.json()
+		for element in data.get("elements", []):
+			name = element["tags"].get("name", "Inconnu")
+			type_value = element["tags"].get(info_type, "Autre")
+			if "lat" in element and "lon" in element:
+				lat_info, lon_info = element["lat"], element["lon"]
+			elif "center" in element:
+				lat_info, lon_info = element["center"]["lat"], element["center"]["lon"]
+			else:
+				continue
+			distance = utils.haversine(lat, lon, lat_info, lon_info)
+			infos.append({
+				"name": name,
+				"type": type_value,
+				"lat": lat_info,
+				"lon": lon_info,
+				"distance": distance
+			})
+	return infos
+
+
+def print_stats_data(adresse, lat, lon, stats) :
+	buffer = StringIO()
+
+	print("Adresse :", adresse, file=buffer)
+	print("Coordinates :", lat, ",", lon, file=buffer)
+	for key, value in stats.items() :
+		if key == "School_Charge" :
+			print(key, ":", file=buffer)
+			for info, data in value.items() :
+				if info == "Status_Recap" :
+					print("|\t - ", info, file=buffer)
+					for info1, data1 in data.items() :
+						print("|\t |\t - ", info1, ":", data1, file=buffer)
+				else :
+					print("|\t - ", info, ":", data, file=buffer)
+		else :
+			print(key, ":", value, file=buffer)
+		if key == "type_ville" :
+			print("\n", file=buffer)
+	output = buffer.getvalue()
+	buffer.close()
+	return output
+
+def DataProvider(adresse, lat, lon) :
+	city = utils.get_city_from_coords(lat, lon)
+	stats = citysize.get_commune_info(city)
+	stats["type_ville"] = citysize.categorie_ville(stats['population'], stats['densite'])
+
+	if stats["type_ville"] == "tres grande ville" :
+		queries = [
+			("amenity", ["restaurant", "fast_food"], "Shop", 500),
+			("shop", ["supermarket"], "Food Store", 300),
+			("amenity", ["hospital", "clinic"], "Healthcare", 1000),
+			("amenity", ["police", "fire_station"], "Public Services", 2000),
+			("amenity", ["school"], "School", 500),
+		]
+	elif stats["type_ville"] == "grande ville" :
+		queries = [
+			("amenity", ["restaurant", "fast_food"], "Shop", 1000),
+			("shop", ["supermarket"], "Food Store", 500),
+			("amenity", ["hospital", "clinic"], "Healthcare", 2000),
+			("amenity", ["police", "fire_station"], "Public Services", 3000),
+			("amenity", ["school"], "School", 1000),
+			("highway", ["bus_stop"], "Transport", 1000),
+			("station", ["subway"], "Transport", 1000),
+			("railway", ["tram_stop"], "Transport", 1000),
+			("railway", ["station"], "Train Station", 1000),
+		]
+	elif stats["type_ville"] == "ville moyenne" :
+		queries = [
+			("amenity", ["restaurant", "fast_food"], "Shop", 2000),
+			("shop", ["supermarket"], "Food Store", 0),
+			("amenity", ["hospital", "clinic"], "Healthcare", 0),
+			("amenity", ["police", "fire_station"], "Public Services", 5000),
+			("amenity", ["school"], "School", 0),
+		]
+	elif stats["type_ville"] == "petite ville" :
+		queries = [
+			("amenity", ["restaurant", "fast_food"], "Shop", 3000),
+			("shop", ["supermarket"], "Food Store", 2000),
+			("amenity", ["hospital", "clinic"], "Healthcare", 5000),
+			("amenity", ["police", "fire_station"], "Public Services", 5000),
+			("amenity", ["school"], "School", 3000),
+		]
+	elif stats["type_ville"] == "village" :
+		queries = [
+			("amenity", ["restaurant", "fast_food"], "Shop", 5000),
+			("shop", ["supermarket"], "Food Store", 5000),
+			("amenity", ["hospital", "clinic"], "Healthcare", 10000),
+			("amenity", ["police", "fire_station"], "Public Services", 10000),
+			("amenity", ["school"], "School", 5000),
+		]
+	else :
+		exit(0)
+
+	# 0 is city other is radius
+	transport_total_nbr = 0
+	transport_total_dist = 0
+	transport_radius = 1000
+
+	for info_type, info_filters, info_explicit, radius in queries:
+		total_dist = 0
+		nbr = 0
+		if radius == 0 :
+			infos = get_infos_in_city_area(lat, lon, city, info_type, info_filters)
+			# print("Looking in City :", city)
+		else :
+			infos = get_infos_nearby(lat, lon, info_type, info_filters, radius)
+			# print("Looking in radius :", radius, "m")
+		# print("Looking for :", info_explicit)
+		for info in infos:
+			# print(f"{info['name']} ({info['type']}) - {utils.reverse_geocode(info['lat'], info['lon'])} - {info['distance']:.0f} m")
+			nbr += 1
+			total_dist += info['distance']
+		if info_explicit == "Transport" :
+			transport_total_nbr += nbr
+			transport_total_dist += total_dist
+		if nbr == 0 :
+			average = 0
+		else :
+			average = round(total_dist / nbr, 1)
+		# print("There is", nbr, info_explicit, "in an area of", radius,"m, the average distance ", average, "m\n")
+		# print("\n")
+		stats[f"{info_explicit}_nbr"] = nbr
+		stats[f"{info_explicit}_radius"] = radius
+		stats[f"{info_explicit}_average_distance"] = average
+
+	if transport_total_nbr == 0:
+		transport_average = 0
+	else:
+		transport_average = round(transport_total_dist / transport_total_nbr, 1)
+		stats["Transport_nbr"] = transport_total_nbr
+		stats["Transport_radius"] = transport_radius
+		stats["Transport_average_distance"] = transport_average
+
+	if stats["population"] >= 5000 :
+		stats["Unemployed_people"] = worker.get_unemployed(city)["nbr_unemployed"]
+		stats["Proportion of unemployed"] = str(round((worker.get_unemployed(city)["nbr_unemployed"] * 100) / stats["population"])) + "%"
+		stats["Job_Offer_in_Departement"] = worker.get_job_offer_in_dep(stats["departement"])["job_offer"]
+
+	if stats["type_ville"] == "tres grande ville" :
+		stats["School_Charge"] = school.school_charge_radius(lat, lon, 500)
+	elif stats["type_ville"] == "grande ville" :
+		stats["School_Charge"] = school.school_charge_radius(lat, lon, 1000)
+	elif stats["type_ville"] == "ville moyenne" :
+		stats["School_Charge"] = school.school_charge_city(city)
+	elif stats["type_ville"] == "petite ville":
+		stats["School_Charge"] = school.school_charge_radius(city)
+		if stats["School_Charge"] == None :
+			stats["School_Charge"] = school.school_charge_radius(lat, lon, 3000)
+	elif stats["type_ville"] == "village" :
+		stats["School_Charge"] = school.school_charge_radius(lat, lon, 5000)
+	formatted_output = print_stats_data(adresse, lat, lon, stats)
+
+	clean_adresse = adresse.replace("/", "_").replace("\\", "_").replace(":", "_").replace(" ", "_")
+	filename = f"CostIAData_{lat},{lon}_{clean_adresse}.txt"
+	with open(filename, "w") as f:
+		f.write(formatted_output)
+	# pdf_filename = f"PDF_report.pdf"
+	# TxttoPDF.text_to_pdf(formatted_output, pdf_filename)
+
+	return {
+		'stats': stats,
+		'formatted_output': formatted_output,
+		'filename': filename
+	}
+
+def Costia_getData_with_adresse(adresse) :
+	lat, lon = utils.geocode_adresse(adresse)
+	if not lat and not lon :
+		return "Uknown adresse"
+	return DataProvider(adresse, lat, lon)
+
+def Costia_getData_with_coordinates(lat, lon) :
+	adresse = utils.reverse_geocode(lat, lon)
+	if adresse == "Adresse inconnue" :
+		return "Uknown location"
+	return DataProvider(adresse, lat, lon)
 
 if __name__ == "__main__":
-    address = "20 Quai Frissard, 76600 Le Havre"
+	# adresse = "24ir9 fapfjal, 8ru2o"
+	# adresse = "8 rue Riquet, 750000 Paris"
+	adresse = "20 Quai Frissard, 76600 Le Havre"
+	result = Costia_getData_with_adresse(adresse)
+	if isinstance(result, dict):
+		print(result['formatted_output'])
+	else:
+		print(result)
 
-    print(f"Analyzing address: {address}")
-    city_stats = analyze_city_amenities(address)
 
-    if city_stats:
-        print("\n" + "="*50)
-        print("CITY ANALYSIS RESULTS")
-        print("="*50)
-        print_city_analysis(city_stats)
-    else:
-        print("Could not analyze the address.")
+

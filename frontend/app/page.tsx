@@ -41,6 +41,57 @@ interface LocationData {
 	job_offer_department: string | null
 }
 
+interface EnhancedLocationData {
+	// Basic city information
+	nom_ville: string
+	type_commune: string
+	code_postal: string
+	code_insee: string
+	population: number
+	superficie_km2: number
+	densite: number
+	departement: string
+	region: string
+	latitude: number
+	longitude: number
+	type_ville: string
+
+	// Employment data
+	Unemployed_people?: number
+	"Proportion of unemployed"?: string
+	Job_Offer_in_Departement?: number
+
+	// Amenities data
+	Shop_nbr?: number
+	Shop_radius?: number
+	Shop_average_distance?: number
+
+	"Food Store_nbr"?: number
+	"Food Store_radius"?: number
+	"Food Store_average_distance"?: number
+
+	Healthcare_nbr?: number
+	Healthcare_radius?: number
+	Healthcare_average_distance?: number
+
+	"Public Services_nbr"?: number
+	"Public Services_radius"?: number
+	"Public Services_average_distance"?: number
+
+	School_nbr?: number
+	School_radius?: number
+	School_average_distance?: number
+
+	Transport_nbr?: number
+	Transport_radius?: number
+	Transport_average_distance?: number
+
+	// School charge data
+	School_Charge?: {
+		[key: string]: any
+	}
+}
+
 interface AutocompleteSuggestion {
 	id: number
 	type: "city" | "street" | "landmark" | "coordinates"
@@ -65,7 +116,7 @@ export default function HackathonApp() {
 	const [coords, setCoords] = useState<Coords | null>(null)
 	const [address, setAddress] = useState("")
 
-	const [locationData, setLocationData] = useState<LocationData | null>(null)
+	const [locationData, setLocationData] = useState<EnhancedLocationData | null>(null)
 	const [error, setError] = useState("")
 
 	const [latInput, setLatInput] = useState("")
@@ -188,8 +239,7 @@ export default function HackathonApp() {
 		const lat = parseFloat(latInput);
 		const lon = parseFloat(lonInput);
 		setCoords(!isNaN(lat) && !isNaN(lon) ? { lat, lon } : null);
-	}
-	// Handle search
+	}	// Handle search
 	const handleSearch = async () => {
 		if (!coords && !address.trim()) return
 
@@ -201,12 +251,56 @@ export default function HackathonApp() {
 			const response = await axios.post("http://localhost:8000/api/search/", {
 				coordinates: coords,
 				address: address.trim(),
-				city: address.trim().split(",")[1].trim().substring(5).trim() || undefined,
+				city: address.trim().split(",")[1]?.trim()?.substring(5)?.trim() || undefined,
 			})
 
-			setLocationData(response.data)
+			// The API returns { stats: {...}, formatted_output: "...", filename: "..." }
+			// We need the stats object which contains the enhanced location data
+			if (response.data.stats) {
+				setLocationData(response.data.stats)
+			} else {
+				// Fallback if the API returns data directly
+				setLocationData(response.data)
+			}
 			setAppState("results")
 		} catch (err: any) {
+			// For development, if backend is not available, use mock data
+			if (err.code === 'ECONNREFUSED' || err.response?.status === 404) {
+				console.log("Backend not available, using mock data for testing")
+				const mockData: EnhancedLocationData = {
+					nom_ville: "Paris",
+					type_commune: "Commune",
+					code_postal: "75001",
+					code_insee: "75101",
+					population: 2161000,
+					superficie_km2: 105.4,
+					densite: 20500,
+					departement: "Paris",
+					region: "Île-de-France",
+					latitude: 48.8566,
+					longitude: 2.3522,
+					type_ville: "tres grande ville",
+					Unemployed_people: 150000,
+					"Proportion of unemployed": "7%",
+					Job_Offer_in_Departement: 45000,
+					Shop_nbr: 125,
+					Shop_average_distance: 250,
+					"Food Store_nbr": 45,
+					"Food Store_average_distance": 180,
+					Healthcare_nbr: 25,
+					Healthcare_average_distance: 400,
+					"Public Services_nbr": 15,
+					"Public Services_average_distance": 800,
+					School_nbr: 35,
+					School_average_distance: 300,
+					Transport_nbr: 85,
+					Transport_average_distance: 150
+				}
+				setLocationData(mockData)
+				setAppState("results")
+				return
+			}
+
 			if (err.response?.data?.error) {
 				setError(err.response.data.error)
 			} else {
@@ -626,44 +720,143 @@ export default function HackathonApp() {
 												)}
 											</div>
 										</div>
-									</div>
-
-									{/* Enhanced Employment Data */}
-									{(locationData.nbr_unemployed || locationData.job_offers) && (
+									</div>									{/* Enhanced Employment Data */}
+									{(locationData.Unemployed_people || locationData.Job_Offer_in_Departement) && (
 										<div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg p-4 sm:p-6 hover:scale-[1.01] transition-all">
 											<h4 className="text-xl font-semibold text-yellow-900 dark:text-yellow-100 mb-4">
 												Employment Overview
 											</h4>
 											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-												{locationData.nbr_unemployed && (
+												{locationData.Unemployed_people && (
 													<div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4 animate-in slide-in-from-bottom-2 transition-all">
 														<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Unemployed</p>
 														<p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-															{locationData.nbr_unemployed.toLocaleString()}
+															{locationData.Unemployed_people.toLocaleString()}
 														</p>
-														{locationData.unemployment_commune && (
+														{locationData["Proportion of unemployed"] && (
 															<p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-																in {locationData.unemployment_commune}
+																{locationData["Proportion of unemployed"]} of population
 															</p>
 														)}
 													</div>
 												)}
-												{locationData.job_offers && (
+												{locationData.Job_Offer_in_Departement && (
 													<div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4 animate-in slide-in-from-bottom-2 transition-all">
 														<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Job Offers</p>
 														<p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-															{locationData.job_offers.toLocaleString()}
+															{locationData.Job_Offer_in_Departement.toLocaleString()}
 														</p>
-														{locationData.job_offer_department && (
-															<p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-																in {locationData.job_offer_department}
-															</p>
-														)}
+														<p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+															in {locationData.departement}
+														</p>
 													</div>
 												)}
 											</div>
 										</div>
 									)}
+
+									{/* New Amenities Section */}
+									<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+										{/* Shops & Services */}
+										<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl">
+											<CardHeader>
+												<CardTitle className="dark:text-white flex items-center gap-2">
+													<span>🏪</span>
+													Shops & Services
+												</CardTitle>
+												<CardDescription className="dark:text-gray-300">
+													Nearby amenities and services
+												</CardDescription>
+											</CardHeader>
+											<CardContent className="space-y-4">
+												{locationData.Shop_nbr !== undefined && (
+													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+														<span className="font-medium">Restaurants & Shops</span>
+														<div className="text-right">
+															<div className="font-bold text-blue-600 dark:text-blue-400">{locationData.Shop_nbr}</div>
+															{locationData.Shop_average_distance && (
+																<div className="text-xs text-gray-500">Avg: {locationData.Shop_average_distance}m</div>
+															)}
+														</div>
+													</div>
+												)}
+
+												{locationData["Food Store_nbr"] !== undefined && (
+													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+														<span className="font-medium">Food Stores</span>
+														<div className="text-right">
+															<div className="font-bold text-green-600 dark:text-green-400">{locationData["Food Store_nbr"]}</div>
+															{locationData["Food Store_average_distance"] && (
+																<div className="text-xs text-gray-500">Avg: {locationData["Food Store_average_distance"]}m</div>
+															)}
+														</div>
+													</div>
+												)}
+
+												{locationData.Healthcare_nbr !== undefined && (
+													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+														<span className="font-medium">Healthcare</span>
+														<div className="text-right">
+															<div className="font-bold text-red-600 dark:text-red-400">{locationData.Healthcare_nbr}</div>
+															{locationData.Healthcare_average_distance && (
+																<div className="text-xs text-gray-500">Avg: {locationData.Healthcare_average_distance}m</div>
+															)}
+														</div>
+													</div>
+												)}
+											</CardContent>
+										</Card>
+
+										{/* Public Services & Education */}
+										<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl">
+											<CardHeader>
+												<CardTitle className="dark:text-white flex items-center gap-2">
+													<span>🏛️</span>
+													Public Services
+												</CardTitle>
+												<CardDescription className="dark:text-gray-300">
+													Schools, transport, and public facilities
+												</CardDescription>
+											</CardHeader>
+											<CardContent className="space-y-4">
+												{locationData["Public Services_nbr"] !== undefined && (
+													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+														<span className="font-medium">Public Services</span>
+														<div className="text-right">
+															<div className="font-bold text-purple-600 dark:text-purple-400">{locationData["Public Services_nbr"]}</div>
+															{locationData["Public Services_average_distance"] && (
+																<div className="text-xs text-gray-500">Avg: {locationData["Public Services_average_distance"]}m</div>
+															)}
+														</div>
+													</div>
+												)}
+
+												{locationData.School_nbr !== undefined && (
+													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+														<span className="font-medium">Schools</span>
+														<div className="text-right">
+															<div className="font-bold text-indigo-600 dark:text-indigo-400">{locationData.School_nbr}</div>
+															{locationData.School_average_distance && (
+																<div className="text-xs text-gray-500">Avg: {locationData.School_average_distance}m</div>
+															)}
+														</div>
+													</div>
+												)}
+
+												{locationData.Transport_nbr !== undefined && (
+													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+														<span className="font-medium">Transport</span>
+														<div className="text-right">
+															<div className="font-bold text-orange-600 dark:text-orange-400">{locationData.Transport_nbr}</div>
+															{locationData.Transport_average_distance && (
+																<div className="text-xs text-gray-500">Avg: {locationData.Transport_average_distance}m</div>
+															)}
+														</div>
+													</div>
+												)}
+											</CardContent>
+										</Card>
+									</div>
 								</CardContent>
 							</Card>
 

@@ -20,7 +20,26 @@ interface LocationData {
   job_offer_department: string | null;
 }
 
-export const exportToPDF = async (data: LocationData, elementId: string) => {
+interface EnhancedLocationData {
+  nom_ville: string;
+  type_commune: string;
+  code_postal: string;
+  code_insee: string;
+  population: number;
+  superficie_km2: number;
+  densite: number;
+  departement: string;
+  region: string;
+  latitude: number;
+  longitude: number;
+  type_ville: string;
+  Unemployed_people?: number;
+  "Proportion of unemployed"?: string;
+  Job_Offer_in_Departement?: number;
+  [key: string]: any; // for dynamic amenities data
+}
+
+export const exportToPDF = async (data: LocationData | EnhancedLocationData, elementId: string) => {
   try {
     const element = document.getElementById(elementId);
     if (!element) {

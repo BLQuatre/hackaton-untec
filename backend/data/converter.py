@@ -7,7 +7,7 @@ cursor = conn.cursor()
 unemployed_cache = {}
 job_offers_cache = {}
 
-with open("Unemployed.csv", "r", encoding="utf-8") as unemployed_file:
+with open("raw/Unemployed.csv", "r", encoding="utf-8") as unemployed_file:
 	unemployed_file_reader = csv.DictReader(unemployed_file, delimiter=';')
 	for row in unemployed_file_reader:
 		try:
@@ -18,7 +18,7 @@ with open("Unemployed.csv", "r", encoding="utf-8") as unemployed_file:
 		except Exception as e:
 			print(f"Error processing unemployed data for commune {cp_commune}: {e}")
 
-with open("JobOffer.csv", "r", encoding="utf-8") as job_offers_file:
+with open("raw/JobOffer.csv", "r", encoding="utf-8") as job_offers_file:
 	job_offers_file_reader = csv.DictReader(job_offers_file, delimiter=';')
 	for row in job_offers_file_reader:
 		try:
@@ -37,7 +37,7 @@ count = 0
 try:
 	cursor.execute('CREATE TABLE IF NOT EXISTS "communes" ("displayname" TEXT, "name" TEXT, "area_km2" INTEGER, "density" INTEGER, "population" INTEGER, "unemployed" INTEGER DEFAULT NULL, "job_offers" INTEGER DEFAULT NULL)')
 
-	with open("communes-france-2025.csv", "r", encoding="utf-8") as communes_file:
+	with open("raw/communes-france-2025.csv", "r", encoding="utf-8") as communes_file:
 		communes_file_reader = csv.DictReader(communes_file, delimiter=',')
 
 		for commune in communes_file_reader:
