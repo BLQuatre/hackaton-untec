@@ -19,7 +19,7 @@ interface EnhancedLocationData {
 	Shop_nbr?: number;
 	"Food Store_nbr"?: number;
 	Healthcare_nbr?: number;
-	"Public Services_nbr"?: number;
+	Public_Services_nbr?: number;
 	School_nbr?: number;
 	Transport_nbr?: number;
 
@@ -76,14 +76,13 @@ export function ChartComponent({ data }: ChartComponentProps) {
 	];
 
 	// Add amenities data for enhanced charts
-	if (isEnhanced(data)) {
-		const amenitiesData = [
+	if (isEnhanced(data)) {		const amenitiesData = [
 			{ name: 'Shops', value: data.Shop_nbr || 0 },
 			{ name: 'Food Stores', value: data["Food Store_nbr"] || 0 },
 			{ name: 'Healthcare', value: data.Healthcare_nbr || 0 },
 			{ name: 'Schools', value: data.School_nbr || 0 },
 			{ name: 'Transport', value: data.Transport_nbr || 0 },
-			{ name: 'Public Services', value: data["Public Services_nbr"] || 0 },
+			{ name: 'Public Services', value: data.Public_Services_nbr || 0 },
 		].filter(item => item.value > 0);
 
 		if (amenitiesData.length > 0) {

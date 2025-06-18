@@ -52,14 +52,13 @@ interface EnhancedLocationData {
 	"Food Store_nbr"?: number
 	"Food Store_radius"?: number
 	"Food Store_average_distance"?: number
-
 	Healthcare_nbr?: number
 	Healthcare_radius?: number
 	Healthcare_average_distance?: number
 
-	"Public Services_nbr"?: number
-	"Public Services_radius"?: number
-	"Public Services_average_distance"?: number
+	Public_Services_nbr?: number
+	Public_Services_radius?: number
+	Public_Services_average_distance?: number
 
 	School_nbr?: number
 	School_radius?: number
@@ -308,7 +307,6 @@ export default function HackathonApp() {
 		const lon = parseFloat(lonInput);
 		setCoords(!isNaN(lat) && !isNaN(lon) ? { lat, lon } : null);
 	};
-
 	// Handle search
 	const handleSearch = async () => {
 		if (!coords && !address.trim()) return
@@ -342,66 +340,6 @@ export default function HackathonApp() {
 				return;
 			}
 			setAppState("results")		} catch (err: any) {
-			// For development, if backend is not available, use mock data
-			if (err.code === 'ECONNREFUSED' || err.response?.status === 404) {
-				console.log("Backend not available, using mock data for testing");
-				const mockData: EnhancedLocationData = {
-					nom_ville: "Paris",
-					type_commune: "Commune",
-					code_postal: "75001",
-					code_insee: "75101",
-					population: 2161000,
-					superficie_km2: 105.4,
-					densite: 20500,
-					departement: "Paris",
-					region: "Île-de-France",
-					latitude: 48.8566,
-					longitude: 2.3522,
-					type_ville: "tres grande ville",
-					Unemployed_people: 150000,
-					"Proportion of unemployed": "7%",
-					Job_Offer_in_Departement: 45000,
-					Shop_nbr: 125,
-					Shop_average_distance: 250,
-					"Food Store_nbr": 45,
-					"Food Store_average_distance": 180,
-					Healthcare_nbr: 25,
-					Healthcare_average_distance: 400,
-					"Public Services_nbr": 15,
-					"Public Services_average_distance": 800,
-					School_nbr: 35,
-					School_average_distance: 300,
-					Transport_nbr: 85,
-					Transport_average_distance: 150,
-					resume: `# Paris Overview
-
-Paris is a **major metropolitan area** with excellent connectivity and abundant amenities.
-
-## Transportation 🚌
-- Outstanding public transportation with **85 nearby options**
-- Average distance: *150m*
-
-## Shopping & Services 🛍️
-- Highly accessible with **125 shops** within 250m on average
-- Wide variety of retail options available
-
-## Healthcare 🏥
-- Well-distributed healthcare facilities
-- **25 locations** averaging 400m away
-
-## Employment Market 💼
-The employment situation shows:
-- **150,000** unemployed residents *(7% of population)*
-- **45,000** job offers available in the department
-- Indicates *active job market dynamics*
-
-> This data represents a comprehensive analysis of urban amenities and services availability.`
-				};
-				setLocationData(mockData)
-				setAppState("results")
-				return
-			}
-
 			if (err.response?.data?.error) {
 				setError(err.response.data.error)
 			} else {
@@ -727,49 +665,409 @@ The employment situation shows:
 							</div>
 						</div>
 
-						<div id="results-content" className="space-y-6">
-							{/* Enhanced Info Card */}
+						<div id="results-content" className="space-y-6">							{/* Location Header */}
 							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl animate-in slide-in-from-bottom-6 duration-300 hover:shadow-2xl transition-all">
-								<CardHeader>
-									<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-										<div>
-											<CardTitle className="dark:text-white text-xl sm:text-2xl">Location Information</CardTitle>
-											<CardDescription className="dark:text-gray-300">
-												Detailed information about your selected location
-											</CardDescription>
-										</div>
-										<div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
-											<BarChart3 className="h-4 w-4" />
-											<span>Interactive Data</span>
+								<CardContent className="p-8">
+									<div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 hover:scale-[1.02] transition-all">
+										<div className="flex items-center justify-between mb-4">
+											<div>
+												<h3 className="text-3xl sm:text-4xl font-bold text-blue-900 dark:text-blue-100 mb-2">
+													{locationData.nom_ville || 'Unknown City'}
+												</h3>
+												<p className="text-blue-700 dark:text-blue-200 text-xl">
+													{locationData.region}, {locationData.departement}
+												</p>
+												<p className="text-blue-600 dark:text-blue-300 text-lg">
+													Code postal: {locationData.code_postal} • Code INSEE: {locationData.code_insee}
+												</p>
+											</div>
+											{locationData.latitude && locationData.longitude && (
+												<div className="text-right">
+													<div className="bg-white/70 dark:bg-gray-800/70 rounded-lg p-4">
+														<p className="text-sm text-gray-600 dark:text-gray-400">Coordinates</p>
+														<p className="font-mono text-blue-800 dark:text-blue-200">{locationData.latitude.toFixed(6)}</p>
+														<p className="font-mono text-blue-800 dark:text-blue-200">{locationData.longitude.toFixed(6)}</p>
+													</div>
+												</div>
+											)}
 										</div>
 									</div>
-								</CardHeader>
-								<CardContent className="space-y-6">
-									{/* Location Header */}
-									<div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 hover:scale-[1.02] transition-all">
-										<h3 className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100 mb-2">
-											{locationData.nom_ville}
-										</h3>
-										<p className="text-blue-700 dark:text-blue-200 text-lg sm:text-xl">
-											{locationData.region}
-										</p>
-										{locationData.departement && (
-											<p className="text-blue-600 dark:text-blue-300 text-md sm:text-lg">
-												{locationData.departement}
-											</p>
+								</CardContent>
+							</Card>							{/* Key Statistics Cards */}
+							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all hover:scale-105">
+									<CardContent className="p-6">
+										<div className="flex items-center justify-between">
+											<div>
+												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Population</p>
+												<p className="text-2xl font-bold text-gray-900 dark:text-white">
+													{locationData.population ? (locationData.population > 1000000 ?
+														`${(locationData.population / 1000000).toFixed(2)}M` :
+														locationData.population.toLocaleString()) : 'N/A'}
+												</p>
+												<p className="text-xs text-gray-500">{locationData.type_ville || locationData.type_commune || 'Unknown'}</p>
+											</div>
+											<div className="h-12 w-12 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
+												<span className="text-blue-600 dark:text-blue-400 text-xl">👥</span>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all hover:scale-105">
+									<CardContent className="p-6">
+										<div className="flex items-center justify-between">
+											<div>
+												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Density</p>
+												<p className="text-2xl font-bold text-gray-900 dark:text-white">
+													{locationData.densite ? locationData.densite.toLocaleString() : 'N/A'}
+												</p>
+												<p className="text-xs text-gray-500">per km²</p>
+											</div>
+											<div className="h-12 w-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+												<span className="text-green-600 dark:text-green-400 text-xl">🏙️</span>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all hover:scale-105">
+									<CardContent className="p-6">
+										<div className="flex items-center justify-between">
+											<div>
+												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Surface Area</p>
+												<p className="text-2xl font-bold text-gray-900 dark:text-white">
+													{locationData.superficie_km2 || 'N/A'}
+												</p>
+												<p className="text-xs text-gray-500">km²</p>
+											</div>
+											<div className="h-12 w-12 bg-purple-100 dark:bg-purple-900/30 rounded-lg flex items-center justify-center">
+												<span className="text-purple-600 dark:text-purple-400 text-xl">📏</span>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all hover:scale-105">
+									<CardContent className="p-6">
+										<div className="flex items-center justify-between">
+											<div>
+												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Global Score</p>
+												<p className="text-3xl font-bold text-green-600 dark:text-green-400">
+													{locationData.Score_Global ? locationData.Score_Global.split('/')[0] : 'N/A'}
+												</p>
+												<p className="text-xs text-gray-500">/100</p>
+											</div>
+											<div className="h-12 w-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+												<span className="text-green-600 dark:text-green-400 text-xl">⭐</span>
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+							</div>
+
+							{/* Score Overview */}
+							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+								<CardHeader>
+									<CardTitle className="text-2xl dark:text-white flex items-center gap-2">
+										<BarChart3 className="h-6 w-6" />
+										Quality of Life Scores
+									</CardTitle>
+									<CardDescription className="dark:text-gray-300">
+										Comprehensive evaluation across different categories
+									</CardDescription>
+								</CardHeader>								<CardContent>
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+										{[
+											{ name: 'Commerce', scoreKey: 'Score_Commerce', color: 'bg-green-500', icon: '🛍️' },
+											{ name: 'Services Publics', scoreKey: 'Score_Service public', color: 'bg-blue-500', icon: '🏛️' },
+											{ name: 'Éducation', scoreKey: 'Score_Éducation', color: 'bg-yellow-500', icon: '🎓' },
+											{ name: 'Santé', scoreKey: 'Score_Santé', color: 'bg-red-500', icon: '🏥' },
+											{ name: 'Travail', scoreKey: 'Score_Travail', color: 'bg-orange-500', icon: '💼' },
+											{ name: 'Transport', scoreKey: 'Score_Transport', color: 'bg-purple-500', icon: '🚌' }
+										].map((item, index) => {
+											const scoreValue = locationData[item.scoreKey as keyof EnhancedLocationData] as string;
+											const score = scoreValue ? parseInt(scoreValue.split('/')[0]) : 0;
+											return (
+												<div key={index} className="space-y-2">
+													<div className="flex items-center justify-between">
+														<span className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
+															<span>{item.icon}</span>
+															{item.name}
+														</span>
+														<span className="text-lg font-bold text-gray-900 dark:text-white">
+															{score}/100
+														</span>
+													</div>
+													<div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-3">
+														<div
+															className={`h-3 rounded-full ${item.color} transition-all duration-1000 ease-out`}
+															style={{ width: `${score}%` }}
+														></div>
+													</div>
+												</div>
+											);
+										})}
+									</div>
+								</CardContent>
+							</Card>
+
+							{/* Employment Statistics */}
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+									<CardHeader>
+										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
+											💼 Employment Overview
+										</CardTitle>
+									</CardHeader>									<CardContent className="space-y-4">
+										<div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
+											<div className="flex items-center justify-between mb-2">
+												<span className="text-red-700 dark:text-red-300 font-medium">Unemployed People</span>
+												<span className="text-2xl font-bold text-red-800 dark:text-red-200">
+													{locationData.Unemployed_people ? locationData.Unemployed_people.toLocaleString() : 'N/A'}
+												</span>
+											</div>
+											<div className="text-sm text-red-600 dark:text-red-400">
+												{locationData["Proportion of unemployed"] || 'N/A'} of population
+											</div>
+										</div>
+										<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+											<div className="flex items-center justify-between mb-2">
+												<span className="text-green-700 dark:text-green-300 font-medium">Job Offers Available</span>
+												<span className="text-2xl font-bold text-green-800 dark:text-green-200">
+													{locationData.Job_Offer_in_Departement ? locationData.Job_Offer_in_Departement.toLocaleString() : 'N/A'}
+												</span>
+											</div>
+											<div className="text-sm text-green-600 dark:text-green-400">In the department</div>
+										</div>
+										{locationData.Unemployed_people && locationData.Job_Offer_in_Departement && (
+											<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+												<div className="text-center">
+													<div className="text-3xl font-bold text-blue-800 dark:text-blue-200">
+														{(locationData.Unemployed_people / locationData.Job_Offer_in_Departement).toFixed(1)}
+													</div>
+													<div className="text-sm text-blue-600 dark:text-blue-400">Unemployed per job offer</div>
+												</div>
+											</div>
 										)}
-									</div>									{/* AI Resume Section */}
-									{locationData.resume && (
-										<div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-6 hover:scale-[1.01] transition-all border border-purple-200 dark:border-purple-800">
-											<h4 className="text-xl font-semibold text-purple-900 dark:text-purple-100 mb-4 flex items-center gap-2">
-												<span>🤖</span>
-												AI Summary
-											</h4>
+									</CardContent>
+								</Card>
+
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+									<CardHeader>
+										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
+											🎓 Education Statistics
+										</CardTitle>
+									</CardHeader>									<CardContent className="space-y-4">
+										{locationData.School_Charge && (
+											<>
+												<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+													<div className="flex items-center justify-between mb-2">
+														<span className="text-blue-700 dark:text-blue-300 font-medium">Elementary Schools</span>
+														<span className="text-2xl font-bold text-blue-800 dark:text-blue-200">
+															{locationData.School_Charge.Total_of_Elementary_School || 'N/A'}
+														</span>
+													</div>
+												</div>
+												{locationData.School_Charge.Status_Recap && (
+													<div className="space-y-2">
+														{Object.entries(locationData.School_Charge.Status_Recap).map(([status, count], index) => (
+															<div key={index} className="flex justify-between text-sm">
+																<span className="text-gray-600 dark:text-gray-400">{status}</span>
+																<span className={`font-medium ${
+																	status === 'Under Capacity' ? 'text-green-600 dark:text-green-400' :
+																	status === 'Optimal' ? 'text-blue-600 dark:text-blue-400' :
+																	'text-yellow-600 dark:text-yellow-400'
+																}`}>
+																	{count} {status === locationData.School_Charge?.Most_common_status &&
+																		locationData.School_Charge?.Most_common_occurence &&
+																		`(${locationData.School_Charge.Most_common_occurence})`}
+																</span>
+															</div>
+														))}
+													</div>
+												)}
+												{locationData.School_Charge.Most_common_status && (
+													<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
+														<div className="text-sm text-green-700 dark:text-green-300">
+															Most schools are {locationData.School_Charge.Most_common_status.toLowerCase()}
+														</div>
+													</div>
+												)}
+											</>
+										)}
+									</CardContent>
+								</Card>
+							</div>
+
+							{/* Amenities Overview */}
+							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+								<CardHeader>
+									<CardTitle className="text-2xl dark:text-white flex items-center gap-2">
+										<Map className="h-6 w-6" />
+										Local Amenities
+									</CardTitle>
+									<CardDescription className="dark:text-gray-300">
+										Services and facilities within walking distance
+									</CardDescription>
+								</CardHeader>
+								<CardContent>									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+										{[
+											{ type: 'Shops', countKey: 'Shop_nbr', distanceKey: 'Shop_average_distance', radiusKey: 'Shop_radius', icon: '🛍️',
+											  bgClass: 'bg-blue-50 dark:bg-blue-900/20', borderClass: 'border-blue-200 dark:border-blue-800', textClass: 'text-blue-600 dark:text-blue-400' },
+											{ type: 'Food Stores', countKey: 'Food Store_nbr', distanceKey: 'Food Store_average_distance', radiusKey: 'Food Store_radius', icon: '🥖',
+											  bgClass: 'bg-green-50 dark:bg-green-900/20', borderClass: 'border-green-200 dark:border-green-800', textClass: 'text-green-600 dark:text-green-400' },
+											{ type: 'Hospitals', countKey: 'Hospital_nbr', distanceKey: 'Hospital_average_distance', radiusKey: 'Hospital_radius', icon: '🏥',
+											  bgClass: 'bg-red-50 dark:bg-red-900/20', borderClass: 'border-red-200 dark:border-red-800', textClass: 'text-red-600 dark:text-red-400' },
+											{ type: 'Healthcare', countKey: 'Healthcare_nbr', distanceKey: 'Healthcare_average_distance', radiusKey: 'Healthcare_radius', icon: '⚕️',
+											  bgClass: 'bg-pink-50 dark:bg-pink-900/20', borderClass: 'border-pink-200 dark:border-pink-800', textClass: 'text-pink-600 dark:text-pink-400' },
+											{ type: 'Public Services', countKey: 'Public_Services_nbr', distanceKey: 'Public_Services_average_distance', radiusKey: 'Public_Services_radius', icon: '🏛️',
+											  bgClass: 'bg-purple-50 dark:bg-purple-900/20', borderClass: 'border-purple-200 dark:border-purple-800', textClass: 'text-purple-600 dark:text-purple-400' },
+											{ type: 'Schools', countKey: 'School_nbr', distanceKey: 'School_average_distance', radiusKey: 'School_radius', icon: '🎓',
+											  bgClass: 'bg-yellow-50 dark:bg-yellow-900/20', borderClass: 'border-yellow-200 dark:border-yellow-800', textClass: 'text-yellow-600 dark:text-yellow-400' },
+											{ type: 'Transport', countKey: 'Transport_nbr', distanceKey: 'Transport_average_distance', radiusKey: 'Transport_radius', icon: '🚌',
+											  bgClass: 'bg-indigo-50 dark:bg-indigo-900/20', borderClass: 'border-indigo-200 dark:border-indigo-800', textClass: 'text-indigo-600 dark:text-indigo-400' },
+											{ type: 'Train Stations', countKey: 'Train_Station_nbr', distanceKey: 'Train_Station_average_distance', radiusKey: 'Train_Station_radius', icon: '🚂',
+											  bgClass: 'bg-gray-50 dark:bg-gray-900/20', borderClass: 'border-gray-200 dark:border-gray-800', textClass: 'text-gray-600 dark:text-gray-400' }
+										].map((amenity, index) => {
+											const count = locationData[amenity.countKey as keyof EnhancedLocationData] as number;
+											const distance = locationData[amenity.distanceKey as keyof EnhancedLocationData] as number;
+											const radius = locationData[amenity.radiusKey as keyof EnhancedLocationData] as number;
+
+											return (
+												<div key={index} className={`${amenity.bgClass} rounded-lg p-4 border ${amenity.borderClass} hover:scale-105 transition-all`}>
+													<div className="text-center space-y-2">
+														<div className="text-2xl">{amenity.icon}</div>
+														<div className="font-semibold text-gray-900 dark:text-white">{amenity.type}</div>
+														<div className={`text-2xl font-bold ${amenity.textClass}`}>
+															{count || 'N/A'}
+														</div>
+														{distance && (
+															<div className="text-xs text-gray-600 dark:text-gray-400">
+																Avg. {Math.round(distance)}m away
+															</div>
+														)}
+														{radius && (
+															<div className="text-xs text-gray-500 dark:text-gray-500">
+																Within {radius}m radius
+															</div>
+														)}
+													</div>
+												</div>
+											);
+										})}
+									</div>
+								</CardContent>
+							</Card>
+
+							{/* Map and Charts */}
+							<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+									<CardHeader>
+										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
+											<MapPin className="h-5 w-5" />
+											Location Map
+										</CardTitle>
+									</CardHeader>									<CardContent>
+										<div className="space-y-4">
+											<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+												<h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Address</h4>
+												<p className="text-blue-800 dark:text-blue-200">
+													{locationData.nom_ville}, {locationData.code_postal}
+												</p>
+											</div>
+											<div className="h-64 bg-gradient-to-br from-green-100 to-blue-100 dark:from-green-900/20 dark:to-blue-900/20 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300 dark:border-gray-600">
+												<div className="text-center">
+													<MapPin className="h-16 w-16 mx-auto text-blue-500 dark:text-blue-400 mb-4" />
+													<p className="text-gray-700 dark:text-gray-300 font-medium text-lg">{locationData.nom_ville}</p>
+													{locationData.latitude && locationData.longitude && (
+														<p className="text-sm text-gray-600 dark:text-gray-400">
+															{locationData.latitude.toFixed(6)}, {locationData.longitude.toFixed(6)}
+														</p>
+													)}
+													<p className="text-sm text-gray-500 dark:text-gray-500 mt-2">{locationData.region}</p>
+												</div>
+											</div>
+											{locationData.latitude && locationData.longitude && (
+												<div className="flex justify-center">
+													<a
+														href={`https://www.openstreetmap.org/#map=15/${locationData.latitude}/${locationData.longitude}`}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
+													>
+														<MapPin className="h-4 w-4 mr-2" />
+														View on OpenStreetMap
+													</a>
+												</div>
+											)}
+										</div>
+									</CardContent>
+								</Card>
+
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+									<CardHeader>
+										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
+											<BarChart3 className="h-5 w-5" />
+											Score Breakdown
+										</CardTitle>
+									</CardHeader>									<CardContent>
+										<div className="h-64 flex items-center justify-center">
+											<div className="relative w-48 h-48">
+												{(() => {
+													const globalScore = locationData.Score_Global ? parseInt(locationData.Score_Global.split('/')[0]) : 0;
+													return (
+														<>
+															<svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+																<path
+																	d="m18,2.0845 a 15.9155,15.9155 0 0,1 0,31.831 a 15.9155,15.9155 0 0,1 0,-31.831"
+																	fill="none"
+																	stroke="#e5e7eb"
+																	strokeWidth="2"
+																	className="dark:stroke-gray-600"
+																/>
+																<path
+																	d="m18,2.0845 a 15.9155,15.9155 0 0,1 0,31.831 a 15.9155,15.9155 0 0,1 0,-31.831"
+																	fill="none"
+																	stroke="#10b981"
+																	strokeWidth="2"
+																	strokeDasharray={`${globalScore}, 100`}
+																	strokeLinecap="round"
+																/>
+															</svg>
+															<div className="absolute inset-0 flex items-center justify-center">
+																<div className="text-center">
+																	<div className="text-3xl font-bold text-green-600 dark:text-green-400">{globalScore}</div>
+																	<div className="text-sm text-gray-600 dark:text-gray-400">Global Score</div>
+																</div>
+															</div>
+														</>
+													);
+												})()}
+											</div>
+										</div>
+									</CardContent>
+								</Card>
+							</div>
+
+							{/* AI Resume Section */}
+							{locationData.resume && (
+								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+									<CardHeader>
+										<CardTitle className="text-2xl dark:text-white flex items-center gap-2">
+											<span>🤖</span>
+											AI Analysis Summary
+										</CardTitle>
+										<CardDescription className="dark:text-gray-300">
+											Comprehensive analysis based on all available data
+										</CardDescription>
+									</CardHeader>
+									<CardContent>
+										<div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
 											<div className="prose prose-purple dark:prose-invert prose-sm sm:prose-base max-w-none prose-headings:text-purple-900 dark:prose-headings:text-purple-100 prose-p:text-purple-800 dark:prose-p:text-purple-200 prose-strong:text-purple-900 dark:prose-strong:text-purple-100 prose-em:text-purple-700 dark:prose-em:text-purple-300">
 												<ReactMarkdown
 													remarkPlugins={[remarkGfm]}
 													components={{
-														// Override default styling for better integration
 														blockquote: ({children}) => <blockquote className="border-l-4 border-purple-300 dark:border-purple-600 pl-4 italic bg-purple-50/50 dark:bg-purple-900/10 py-2 my-4 not-prose">{children}</blockquote>,
 														code: ({children}) => <code className="bg-purple-100 dark:bg-purple-800/30 px-1.5 py-0.5 rounded text-sm font-mono text-purple-900 dark:text-purple-100 not-prose">{children}</code>,
 														pre: ({children}) => <pre className="bg-purple-100 dark:bg-purple-800/30 p-4 rounded-lg overflow-x-auto text-sm font-mono text-purple-900 dark:text-purple-100 not-prose">{children}</pre>,
@@ -779,531 +1077,6 @@ The employment situation shows:
 												</ReactMarkdown>
 											</div>
 										</div>
-									)}
-
-									{/* Responsive Grid for Basic Info */}
-									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-										<div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md">
-											<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-												<MapPin className="h-5 w-5 mr-2" />
-												Coordinates
-											</h4>
-											<div className="space-y-2 text-sm">
-												{locationData.latitude && (
-													<p className="text-gray-600 dark:text-gray-300">
-														<span className="font-medium">Lat:</span> {locationData.latitude.toFixed(6)}
-													</p>
-												)}
-												{locationData.longitude && (
-													<p className="text-gray-600 dark:text-gray-300">
-														<span className="font-medium">Long:</span> {locationData.longitude.toFixed(6)}
-													</p>
-												)}
-											</div>
-										</div>
-
-										<div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md">
-											<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">City Info</h4>
-											<div className="space-y-1 text-sm">
-												{locationData.code_postal && (
-													<p className="text-gray-600 dark:text-gray-300">
-														<span className="font-medium">Code:</span> {locationData.code_postal}
-													</p>
-												)}
-												{locationData.type_commune && (
-													<p className="text-gray-600 dark:text-gray-300">
-														<span className="font-medium">Type:</span> {locationData.type_commune}
-													</p>
-												)}
-												{locationData.type_ville && (
-													<p className="text-gray-600 dark:text-gray-300">
-														<span className="font-medium">Category:</span> {locationData.type_ville}
-													</p>
-												)}
-											</div>
-										</div>
-
-										<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md sm:col-span-2 lg:col-span-1">
-											<h4 className="font-semibold text-green-900 dark:text-green-100 mb-3">Quick Stats</h4>
-											<div className="space-y-1 text-sm">
-												{locationData.population && (
-													<p className="text-green-700 dark:text-green-300">
-														<span className="font-medium">Pop:</span> {locationData.population.toLocaleString()}
-													</p>
-												)}
-												{locationData.superficie_km2 && (
-													<p className="text-green-700 dark:text-green-300">
-														<span className="font-medium">Area:</span> {locationData.superficie_km2.toFixed(1)} km²
-													</p>
-												)}
-												{locationData.densite && (
-													<p className="text-green-700 dark:text-green-300">
-														<span className="font-medium">Density:</span> {locationData.densite.toFixed(0)}/km²
-													</p>
-												)}
-											</div>
-										</div>
-									</div>
-									{/* Enhanced Employment Data */}
-									{(locationData.Unemployed_people || locationData.Job_Offer_in_Departement) && (
-										<div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg p-4 sm:p-6 hover:scale-[1.01] transition-all">
-											<h4 className="text-xl font-semibold text-yellow-900 dark:text-yellow-100 mb-4">
-												Employment Overview
-											</h4>
-											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-												{locationData.Unemployed_people && (
-													<div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4 animate-in slide-in-from-bottom-2 transition-all">
-														<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Unemployed</p>
-														<p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-															{locationData.Unemployed_people.toLocaleString()}
-														</p>
-														{locationData["Proportion of unemployed"] && (
-															<p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-																{locationData["Proportion of unemployed"]} of population
-															</p>
-														)}
-													</div>
-												)}
-												{locationData.Job_Offer_in_Departement && (
-													<div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4 animate-in slide-in-from-bottom-2 transition-all">
-														<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Job Offers</p>
-														<p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
-															{locationData.Job_Offer_in_Departement.toLocaleString()}
-														</p>
-														<p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
-															in {locationData.departement}
-														</p>
-													</div>
-												)}
-											</div>
-										</div>
-									)}
-
-									{/* New Amenities Section */}
-									<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-										{/* Shops & Services */}
-										<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl">
-											<CardHeader>
-												<CardTitle className="dark:text-white flex items-center gap-2">
-													<span>🏪</span>
-													Shops & Services
-												</CardTitle>
-												<CardDescription className="dark:text-gray-300">
-													Nearby amenities and services
-												</CardDescription>
-											</CardHeader>
-											<CardContent className="space-y-4">
-												{locationData.Shop_nbr !== undefined && (
-													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-														<span className="font-medium">Restaurants & Shops</span>
-														<div className="text-right">
-															<div className="font-bold text-blue-600 dark:text-blue-400">{locationData.Shop_nbr}</div>
-															{locationData.Shop_average_distance && (
-																<div className="text-xs text-gray-500">Avg: {locationData.Shop_average_distance}m</div>
-															)}
-														</div>
-													</div>
-												)}
-
-												{locationData["Food Store_nbr"] !== undefined && (
-													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-														<span className="font-medium">Food Stores</span>
-														<div className="text-right">
-															<div className="font-bold text-green-600 dark:text-green-400">{locationData["Food Store_nbr"]}</div>
-															{locationData["Food Store_average_distance"] && (
-																<div className="text-xs text-gray-500">Avg: {locationData["Food Store_average_distance"]}m</div>
-															)}
-														</div>
-													</div>
-												)}
-
-												{locationData.Healthcare_nbr !== undefined && (
-													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-														<span className="font-medium">Healthcare</span>
-														<div className="text-right">
-															<div className="font-bold text-red-600 dark:text-red-400">{locationData.Healthcare_nbr}</div>
-															{locationData.Healthcare_average_distance && (
-																<div className="text-xs text-gray-500">Avg: {locationData.Healthcare_average_distance}m</div>
-															)}
-														</div>
-													</div>
-												)}
-											</CardContent>
-										</Card>
-
-										{/* Public Services & Education */}
-										<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl">
-											<CardHeader>
-												<CardTitle className="dark:text-white flex items-center gap-2">
-													<span>🏛️</span>
-													Public Services
-												</CardTitle>
-												<CardDescription className="dark:text-gray-300">
-													Schools, transport, and public facilities
-												</CardDescription>
-											</CardHeader>
-											<CardContent className="space-y-4">
-												{locationData["Public Services_nbr"] !== undefined && (
-													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-														<span className="font-medium">Public Services</span>
-														<div className="text-right">
-															<div className="font-bold text-purple-600 dark:text-purple-400">{locationData["Public Services_nbr"]}</div>
-															{locationData["Public Services_average_distance"] && (
-																<div className="text-xs text-gray-500">Avg: {locationData["Public Services_average_distance"]}m</div>
-															)}
-														</div>
-													</div>
-												)}
-
-												{locationData.School_nbr !== undefined && (
-													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-														<span className="font-medium">Schools</span>
-														<div className="text-right">
-															<div className="font-bold text-indigo-600 dark:text-indigo-400">{locationData.School_nbr}</div>
-															{locationData.School_average_distance && (
-																<div className="text-xs text-gray-500">Avg: {locationData.School_average_distance}m</div>
-															)}
-														</div>
-													</div>
-												)}
-
-												{locationData.Transport_nbr !== undefined && (
-													<div className="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-														<span className="font-medium">Transport</span>
-														<div className="text-right">
-															<div className="font-bold text-orange-600 dark:text-orange-400">{locationData.Transport_nbr}</div>
-															{locationData.Transport_average_distance && (
-																<div className="text-xs text-gray-500">Avg: {locationData.Transport_average_distance}m</div>
-															)}
-														</div>
-													</div>
-												)}
-											</CardContent>
-										</Card>
-									</div>
-								</CardContent>
-							</Card>
-
-							{/* Enhanced Data Visualization */}
-							<div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-								{/* Charts */}
-								<div className="animate-in slide-in-from-left-6 duration-500">
-									<ChartComponent data={locationData} />
-								</div>
-
-								{/* Map */}
-								<div className="animate-in slide-in-from-right-6 duration-500">
-									<MapComponent data={locationData} />
-								</div>
-							</div>
-
-							{/* Comprehensive Scoring Section */}
-							{(locationData.Score_Travail || locationData.Score_Transport || locationData.Score_Global) && (
-								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl animate-in slide-in-from-bottom-6 duration-500">
-									<CardHeader>
-										<CardTitle className="dark:text-white flex items-center gap-2">
-											<span>📊</span>
-											Quality of Life Scores
-										</CardTitle>
-										<CardDescription className="dark:text-gray-300">
-											Comprehensive scoring based on various life quality factors
-										</CardDescription>
-									</CardHeader>
-									<CardContent className="space-y-6">
-										{/* Global Score Display */}
-										{locationData.Score_Global && (
-											<div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 text-center">
-												<h3 className="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-2">Global Quality Score</h3>
-												<div className="text-4xl font-bold text-blue-700 dark:text-blue-300 mb-2">
-													{locationData.Score_Global}
-												</div>
-												<p className="text-blue-600 dark:text-blue-400 text-sm">
-													Overall livability rating based on multiple factors
-												</p>
-											</div>
-										)}
-
-										{/* Category Scores Grid */}
-										<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-											{/* Work Score */}
-											{locationData.Score_Travail && (
-												<div className="bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20 rounded-lg p-4">
-													<div className="flex items-center gap-2 mb-2">
-														<span className="text-2xl">💼</span>
-														<h4 className="font-semibold text-green-900 dark:text-green-100">Work</h4>
-													</div>
-													<div className="text-2xl font-bold text-green-700 dark:text-green-300 mb-1">
-														{locationData.Score_Travail}
-													</div>
-													<p className="text-xs text-green-600 dark:text-green-400">
-														Employment opportunities & unemployment rate
-													</p>
-												</div>
-											)}
-
-											{/* Transport Score */}
-											{locationData.Score_Transport && (
-												<div className="bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-lg p-4">
-													<div className="flex items-center gap-2 mb-2">
-														<span className="text-2xl">🚌</span>
-														<h4 className="font-semibold text-orange-900 dark:text-orange-100">Transport</h4>
-													</div>
-													<div className="text-2xl font-bold text-orange-700 dark:text-orange-300 mb-1">
-														{locationData.Score_Transport}
-													</div>
-													<p className="text-xs text-orange-600 dark:text-orange-400">
-														Public transport availability & accessibility
-													</p>
-												</div>
-											)}
-
-											{/* Public Services Score */}
-											{locationData["Score_Service public"] && (
-												<div className="bg-gradient-to-br from-purple-50 to-violet-50 dark:from-purple-900/20 dark:to-violet-900/20 rounded-lg p-4">
-													<div className="flex items-center gap-2 mb-2">
-														<span className="text-2xl">🏛️</span>
-														<h4 className="font-semibold text-purple-900 dark:text-purple-100">Public Services</h4>
-													</div>
-													<div className="text-2xl font-bold text-purple-700 dark:text-purple-300 mb-1">
-														{locationData["Score_Service public"]}
-													</div>
-													<p className="text-xs text-purple-600 dark:text-purple-400">
-														Government services & administrative facilities
-													</p>
-												</div>
-											)}
-
-											{/* Education Score */}
-											{locationData["Score_Éducation"] && (
-												<div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 rounded-lg p-4">
-													<div className="flex items-center gap-2 mb-2">
-														<span className="text-2xl">🎓</span>
-														<h4 className="font-semibold text-indigo-900 dark:text-indigo-100">Education</h4>
-													</div>
-													<div className="text-2xl font-bold text-indigo-700 dark:text-indigo-300 mb-1">
-														{locationData["Score_Éducation"]}
-													</div>
-													<p className="text-xs text-indigo-600 dark:text-indigo-400">
-														Schools availability & capacity status
-													</p>
-												</div>
-											)}
-
-											{/* Commerce Score */}
-											{locationData.Score_Commerce && (
-												<div className="bg-gradient-to-br from-pink-50 to-rose-50 dark:from-pink-900/20 dark:to-rose-900/20 rounded-lg p-4">
-													<div className="flex items-center gap-2 mb-2">
-														<span className="text-2xl">🛍️</span>
-														<h4 className="font-semibold text-pink-900 dark:text-pink-100">Commerce</h4>
-													</div>
-													<div className="text-2xl font-bold text-pink-700 dark:text-pink-300 mb-1">
-														{locationData.Score_Commerce}
-													</div>
-													<p className="text-xs text-pink-600 dark:text-pink-400">
-														Shopping facilities & retail accessibility
-													</p>
-												</div>
-											)}
-
-											{/* Health Score */}
-											{locationData["Score_Santé"] && (
-												<div className="bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-900/20 dark:to-pink-900/20 rounded-lg p-4">
-													<div className="flex items-center gap-2 mb-2">
-														<span className="text-2xl">🏥</span>
-														<h4 className="font-semibold text-red-900 dark:text-red-100">Health</h4>
-													</div>
-													<div className="text-2xl font-bold text-red-700 dark:text-red-300 mb-1">
-														{locationData["Score_Santé"]}
-													</div>
-													<p className="text-xs text-red-600 dark:text-red-400">
-														Healthcare facilities & medical services
-													</p>
-												</div>
-											)}
-										</div>
-
-										{/* Additional Detailed Information */}
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-											{/* Train Station Information */}
-											{(locationData.Train_Station_nbr !== undefined || locationData.Train_Station_average_distance !== undefined) && (
-												<Card className="dark:bg-gray-700/50 bg-gray-50/50">
-													<CardHeader className="pb-3">
-														<CardTitle className="text-sm flex items-center gap-2">
-															<span>🚂</span>
-															Train Station Access
-														</CardTitle>
-													</CardHeader>
-													<CardContent className="space-y-2">
-														{locationData.Train_Station_nbr !== undefined && (
-															<div className="flex justify-between items-center">
-																<span className="text-sm font-medium">Number of Stations</span>
-																<span className="font-bold text-blue-600 dark:text-blue-400">
-																	{locationData.Train_Station_nbr}
-																</span>
-															</div>
-														)}
-														{locationData.Train_Station_average_distance !== undefined && (
-															<div className="flex justify-between items-center">
-																<span className="text-sm font-medium">Average Distance</span>
-																<span className="font-bold text-blue-600 dark:text-blue-400">
-																	{locationData.Train_Station_average_distance}m
-																</span>
-															</div>
-														)}
-														{locationData.Train_Station_radius !== undefined && (
-															<div className="flex justify-between items-center">
-																<span className="text-sm font-medium">Search Radius</span>
-																<span className="font-bold text-blue-600 dark:text-blue-400">
-																	{locationData.Train_Station_radius}m
-																</span>
-															</div>
-														)}
-													</CardContent>
-												</Card>
-											)}
-
-											{/* Hospital Information */}
-											{(locationData.Hospital_nbr !== undefined || locationData.Hospital_average_distance !== undefined) && (
-												<Card className="dark:bg-gray-700/50 bg-gray-50/50">
-													<CardHeader className="pb-3">
-														<CardTitle className="text-sm flex items-center gap-2">
-															<span>🏥</span>
-															Hospital Access
-														</CardTitle>
-													</CardHeader>
-													<CardContent className="space-y-2">
-														{locationData.Hospital_nbr !== undefined && (
-															<div className="flex justify-between items-center">
-																<span className="text-sm font-medium">Number of Hospitals</span>
-																<span className="font-bold text-red-600 dark:text-red-400">
-																	{locationData.Hospital_nbr}
-																</span>
-															</div>
-														)}
-														{locationData.Hospital_average_distance !== undefined && (
-															<div className="flex justify-between items-center">
-																<span className="text-sm font-medium">Average Distance</span>
-																<span className="font-bold text-red-600 dark:text-red-400">
-																	{locationData.Hospital_average_distance}m
-																</span>
-															</div>
-														)}
-														{locationData.Hospital_radius !== undefined && (
-															<div className="flex justify-between items-center">
-																<span className="text-sm font-medium">Search Radius</span>
-																<span className="font-bold text-red-600 dark:text-red-400">
-																	{locationData.Hospital_radius}m
-																</span>
-															</div>
-														)}
-													</CardContent>
-												</Card>
-											)}
-										</div>
-
-										{/* School Charge Information */}
-										{locationData.School_Charge && (
-											<Card className="dark:bg-gray-700/50 bg-gray-50/50">
-												<CardHeader>
-													<CardTitle className="text-lg flex items-center gap-2">
-														<span>🏫</span>
-														School Capacity Analysis
-													</CardTitle>
-													<CardDescription>
-														Detailed breakdown of school capacity and status in the area
-													</CardDescription>
-												</CardHeader>
-												<CardContent className="space-y-4">
-													{/* Total Schools */}
-													{locationData.School_Charge.Total_of_Elementary_School !== undefined && (
-														<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-															<div className="flex justify-between items-center">
-																<span className="font-medium text-blue-900 dark:text-blue-100">
-																	Total Elementary Schools
-																</span>
-																<span className="text-2xl font-bold text-blue-700 dark:text-blue-300">
-																	{locationData.School_Charge.Total_of_Elementary_School}
-																</span>
-															</div>
-														</div>
-													)}
-
-													{/* Status Breakdown */}
-													{locationData.School_Charge.Status_Recap && (
-														<div className="space-y-3">
-															<h4 className="font-semibold text-gray-900 dark:text-gray-100">School Status Distribution</h4>
-															<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-																{Object.entries(locationData.School_Charge.Status_Recap).map(([status, count]) => (
-																	<div
-																		key={status}
-																		className={`rounded-lg p-3 ${
-																			status === 'Optimal' ? 'bg-green-50 dark:bg-green-900/20' :
-																			status === 'Normal' ? 'bg-yellow-50 dark:bg-yellow-900/20' :
-																			status === 'Under Capacity' ? 'bg-orange-50 dark:bg-orange-900/20' :
-																			'bg-gray-50 dark:bg-gray-800/50'
-																		}`}
-																	>
-																		<div className="text-center">
-																			<div className={`text-lg font-bold ${
-																				status === 'Optimal' ? 'text-green-700 dark:text-green-300' :
-																				status === 'Normal' ? 'text-yellow-700 dark:text-yellow-300' :
-																				status === 'Under Capacity' ? 'text-orange-700 dark:text-orange-300' :
-																				'text-gray-700 dark:text-gray-300'
-																			}`}>
-																				{count}
-																			</div>
-																			<div className={`text-xs font-medium ${
-																				status === 'Optimal' ? 'text-green-600 dark:text-green-400' :
-																				status === 'Normal' ? 'text-yellow-600 dark:text-yellow-400' :
-																				status === 'Under Capacity' ? 'text-orange-600 dark:text-orange-400' :
-																				'text-gray-600 dark:text-gray-400'
-																			}`}>
-																				{status}
-																			</div>
-																		</div>
-																	</div>
-																))}
-															</div>
-														</div>
-													)}
-
-													{/* Most Common Status */}
-													{(locationData.School_Charge.Most_common_status || locationData.School_Charge.Most_common_occurence) && (
-														<div className="bg-gradient-to-r from-indigo-50 to-purple-50 dark:from-indigo-900/20 dark:to-purple-900/20 rounded-lg p-4">
-															<h4 className="font-semibold text-indigo-900 dark:text-indigo-100 mb-2">
-																Predominant School Status
-															</h4>
-															<div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-																{locationData.School_Charge.Most_common_status && (
-																	<div>
-																		<span className="text-sm text-indigo-700 dark:text-indigo-300">Status: </span>
-																		<span className="font-bold text-indigo-800 dark:text-indigo-200">
-																			{locationData.School_Charge.Most_common_status}
-																		</span>
-																	</div>
-																)}
-																{locationData.School_Charge.Most_common_count && (
-																	<div>
-																		<span className="text-sm text-indigo-700 dark:text-indigo-300">Count: </span>
-																		<span className="font-bold text-indigo-800 dark:text-indigo-200">
-																			{locationData.School_Charge.Most_common_count}
-																		</span>
-																	</div>
-																)}
-																{locationData.School_Charge.Most_common_occurence && (
-																	<div>
-																		<span className="text-sm text-indigo-700 dark:text-indigo-300">Percentage: </span>
-																		<span className="font-bold text-indigo-800 dark:text-indigo-200">
-																			{locationData.School_Charge.Most_common_occurence}
-																		</span>
-																	</div>
-																)}
-															</div>
-														</div>
-													)}
-												</CardContent>
-											</Card>
-										)}
 									</CardContent>
 								</Card>
 							)}

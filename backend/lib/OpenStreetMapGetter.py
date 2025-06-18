@@ -304,6 +304,9 @@ def DataProvider(adresse, lat, lon) :
 	# pdf_filename = f"PDF_report.pdf"
 	# TxttoPDF.text_to_pdf(formatted_output, pdf_filename)
 
+	print(stats)
+	print(formatted_output)
+
 	return {
 		'stats': stats,
 		'formatted_output': formatted_output,

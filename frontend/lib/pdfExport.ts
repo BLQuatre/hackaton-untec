@@ -143,7 +143,7 @@ export const exportToPDF = async (data: LocationData | EnhancedLocationData, ele
 			addLine('Healthcare Facilities', (data as any).Healthcare_nbr?.toString());
 			addLine('Schools', (data as any).School_nbr?.toString());
 			addLine('Food Stores', (data as any)["Food Store_nbr"]?.toString());
-			addLine('Public Services', (data as any)["Public Services_nbr"]?.toString());
+			addLine('Public Services', (data as any).Public_Services_nbr?.toString());
 
 			if ((data as any).Train_Station_nbr !== undefined) {
 				addLine('Train Stations', (data as any).Train_Station_nbr?.toString());
