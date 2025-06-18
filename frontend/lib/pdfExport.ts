@@ -113,6 +113,72 @@ export const exportToPDF = async (data: LocationData | EnhancedLocationData, ele
     addLine('Latitude', data.latitude);
     addLine('Longitude', data.longitude);
 
+    // Add scoring data if available
+    if ((data as any).Score_Global || (data as any).Score_Travail) {
+      yPos += 10;
+      pdf.setFontSize(14);
+      pdf.text('Quality of Life Scores', 20, yPos);
+      yPos += 10;
+      pdf.setFontSize(10);
+
+      addLine('Global Score', (data as any).Score_Global);
+      addLine('Work Score', (data as any).Score_Travail);
+      addLine('Transport Score', (data as any).Score_Transport);
+      addLine('Public Services Score', (data as any)["Score_Service public"]);
+      addLine('Education Score', (data as any)["Score_Éducation"]);
+      addLine('Commerce Score', (data as any).Score_Commerce);
+      addLine('Health Score', (data as any)["Score_Santé"]);
+    }
+
+    // Add amenities data if available
+    if ((data as any).Shop_nbr || (data as any).Transport_nbr) {
+      yPos += 10;
+      pdf.setFontSize(14);
+      pdf.text('Amenities & Services', 20, yPos);
+      yPos += 10;
+      pdf.setFontSize(10);
+
+      addLine('Shops', (data as any).Shop_nbr?.toString());
+      addLine('Transport Options', (data as any).Transport_nbr?.toString());
+      addLine('Healthcare Facilities', (data as any).Healthcare_nbr?.toString());
+      addLine('Schools', (data as any).School_nbr?.toString());
+      addLine('Food Stores', (data as any)["Food Store_nbr"]?.toString());
+      addLine('Public Services', (data as any)["Public Services_nbr"]?.toString());
+
+      if ((data as any).Train_Station_nbr !== undefined) {
+        addLine('Train Stations', (data as any).Train_Station_nbr?.toString());
+      }
+      if ((data as any).Hospital_nbr !== undefined) {
+        addLine('Hospitals', (data as any).Hospital_nbr?.toString());
+      }
+    }
+
+    // Add school charge information if available
+    if ((data as any).School_Charge?.Total_of_Elementary_School) {
+      yPos += 10;
+      pdf.setFontSize(14);
+      pdf.text('School Capacity Analysis', 20, yPos);
+      yPos += 10;
+      pdf.setFontSize(10);
+
+      const schoolCharge = (data as any).School_Charge;
+      addLine('Total Elementary Schools', schoolCharge.Total_of_Elementary_School?.toString());
+      addLine('Most Common Status', schoolCharge.Most_common_status);
+      addLine('Status Occurrence', schoolCharge.Most_common_occurence);
+
+      if (schoolCharge.Status_Recap) {
+        yPos += 5;
+        pdf.setFontSize(9);
+        pdf.text('Status Breakdown:', 20, yPos);
+        yPos += 5;
+
+        Object.entries(schoolCharge.Status_Recap).forEach(([status, count]) => {
+          pdf.text(`  ${status}: ${count}`, 25, yPos);
+          yPos += 5;
+        });
+      }
+    }
+
     // Add the screenshot on a new page
     pdf.addPage();
     pdf.setFontSize(14);

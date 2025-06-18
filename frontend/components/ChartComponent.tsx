@@ -22,6 +22,15 @@ interface EnhancedLocationData {
   "Public Services_nbr"?: number;
   School_nbr?: number;
   Transport_nbr?: number;
+
+  // Scoring data
+  Score_Travail?: string;
+  Score_Transport?: string;
+  "Score_Service public"?: string;
+  "Score_Éducation"?: string;
+  Score_Commerce?: string;
+  "Score_Santé"?: string;
+  Score_Global?: string;
 }
 
 interface ChartComponentProps {
@@ -107,6 +116,16 @@ export function ChartComponent({ data }: ChartComponentProps) {
     }
   ];
 
+  // Scores data for enhanced visualization
+  const scoresData = isEnhanced(data) ? [
+    { name: 'Work', score: parseFloat(data.Score_Travail?.replace('/100', '') || '0'), color: '#10B981' },
+    { name: 'Transport', score: parseFloat(data.Score_Transport?.replace('/100', '') || '0'), color: '#F59E0B' },
+    { name: 'Public Services', score: parseFloat(data["Score_Service public"]?.replace('/100', '') || '0'), color: '#8B5CF6' },
+    { name: 'Education', score: parseFloat(data["Score_Éducation"]?.replace('/100', '') || '0'), color: '#3B82F6' },
+    { name: 'Commerce', score: parseFloat(data.Score_Commerce?.replace('/100', '') || '0'), color: '#EC4899' },
+    { name: 'Health', score: parseFloat(data["Score_Santé"]?.replace('/100', '') || '0'), color: '#EF4444' }
+  ].filter(item => item.score > 0) : [];
+
   return (
     <div className="space-y-6">
       {/* Employment Overview */}
@@ -166,6 +185,65 @@ export function ChartComponent({ data }: ChartComponentProps) {
           </BarChart>
         </ResponsiveContainer>
       </div>
+
+      {/* Scores Analysis - New Section */}
+      {isEnhanced(data) && scoresData.length > 0 && (
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+          <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Quality of Life Scores</h3>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Scores Bar Chart */}
+            <div>
+              <h4 className="text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Category Scores (out of 100)</h4>
+              <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={scoresData} layout="horizontal">
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis type="number" domain={[0, 100]} />
+                  <YAxis type="category" dataKey="name" width={80} />
+                  <Tooltip formatter={(value) => [`${value}/100`, 'Score']} />
+                  <Bar dataKey="score" fill="#3B82F6" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Global Score Display */}
+            {data.Score_Global && (
+              <div className="flex flex-col justify-center items-center">
+                <h4 className="text-sm font-medium mb-4 text-gray-700 dark:text-gray-300">Overall Score</h4>
+                <div className="relative w-32 h-32">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={[
+                          { name: 'Score', value: parseFloat(data.Score_Global.replace('/100', '') || '0'), color: '#10B981' },
+                          { name: 'Remaining', value: 100 - parseFloat(data.Score_Global.replace('/100', '') || '0'), color: '#E5E7EB' }
+                        ]}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={30}
+                        outerRadius={60}
+                        startAngle={90}
+                        endAngle={450}
+                        dataKey="value"
+                      >
+                        <Cell fill="#10B981" />
+                        <Cell fill="#E5E7EB" />
+                      </Pie>
+                    </PieChart>
+                  </ResponsiveContainer>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-2xl font-bold text-green-600 dark:text-green-400">
+                        {data.Score_Global}
+                      </div>
+                      <div className="text-xs text-gray-500">Global</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
