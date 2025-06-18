@@ -3,7 +3,7 @@ import requests
 import worker
 import school
 import utils
-import cost_scoring
+import Score
 from io import StringIO
 # from . import TxttoPDF
 
@@ -287,6 +287,12 @@ def DataProvider(adresse, lat, lon) :
 			stats["School_Charge"] = school.school_charge_radius(lat, lon, 3000)
 	elif stats["city_type"] == "Village" :
 		stats["School_Charge"] = school.school_charge_radius(lat, lon, 5000)
+
+	scores = Score.calculate_cost_score(stats)
+	for index, score in scores.items() :
+		stats[f"Score_{index}"] = str(score) + "/100"
+
+
 	formatted_output = print_stats_data(adresse, lat, lon, stats)
 
 	clean_adresse = adresse.replace("/", "_").replace("\\", "_").replace(":", "_").replace(" ", "_")
@@ -295,11 +301,6 @@ def DataProvider(adresse, lat, lon) :
 	# 	f.write(formatted_output)
 	# pdf_filename = f"PDF_report.pdf"
 	# TxttoPDF.text_to_pdf(formatted_output, pdf_filename)
-
-	scores = cost_scoring.calculate_cost_score(stats)
-	for index, score in scores.items() :
-		print(index, ":", score)
-	print("\n")
 
 	return {
 		'stats': stats,
