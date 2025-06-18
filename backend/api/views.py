@@ -19,134 +19,105 @@ from .serializers import CitySearchResultSerializer
 @api_view(['GET'])
 @permission_classes([AllowAny])
 def health_check(request):
-    """
-    A simple health check endpoint to verify the API is working
-    """
-    return JsonResponse({
-        'status': 'ok',
-        'message': 'API is running'
-    })
+	"""
+	A simple health check endpoint to verify the API is working
+	"""
+	return JsonResponse({
+		'status': 'ok',
+		'message': 'API is running'
+	})
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def search_location(request):
-    """
-    Search for location data using real data from CSV files
-    """
-    try:
-        # Get search parameters from request
-        coordinates = request.data.get('coordinates', None)
-        address = request.data.get('address', None)
-        city_name = request.data.get('city', None)
+	"""
+	Search for location data using real data from CSV files
+	"""
+	try:
+		# Get search parameters from request
+		coordinates = request.data.get('coordinates', None)
+		address = request.data.get('address', None)
+		city_name = request.data.get('city', None)
 
-        # Determine the city name to search for
-        search_city = None
-        search_coordinates = None
+		print("city_name:", city_name)
 
-        if city_name:
-            search_city = city_name
-        elif address:
-            search_city = address
-            # Try to get coordinates for the address
-            coords = geocode_address(address)
-            if coords:
-                search_coordinates = {'lat': coords[0], 'lon': coords[1]}
-        elif coordinates:
-            lat = coordinates.get('lat', 0)
-            lon = coordinates.get('lon', 0)
-            search_coordinates = {'lat': lat, 'lon': lon}
-            # Try to get city name from coordinates
-            search_city = get_city_from_coordinates(lat, lon)
+		# Determine the city name to search for
+		search_coordinates = None
 
-        if not search_city:
-            return Response(
-                {'error': 'No valid city name, address, or coordinates provided'},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+		if coordinates:
+			lat = coordinates.get('lat', 0)
+			lon = coordinates.get('lon', 0)
+			search_coordinates = {'lat': lat, 'lon': lon}
 
-        # Get commune information
-        commune_info = get_commune_info(search_city, "communes-france-2025.csv")
-
-        if not commune_info:
-            return Response(
-                {'error': f'City "{search_city}" not found in database'},
-                status=status.HTTP_404_NOT_FOUND
-            )
-
-        # Add city category based on population and density
-        if commune_info.get('population') and commune_info.get('densite'):
-            commune_info['type_ville'] = categorize_city(
-                commune_info['population'],
-                commune_info['densite']
-            )
-
-        # Get unemployment data
-        unemployment_data = get_unemployed_data(search_city, "Unemployed.csv")
-
-        # Get job offers data for the department
-        job_offer_data = None
-        if commune_info.get('departement'):
-            job_offer_data = get_job_offers_in_department(
-                commune_info['departement'],
-                "JobOffer.csv"
-            )
-
-        # Combine all data
-        result_data = {
-            **commune_info,
-            'nbr_unemployed': unemployment_data.get('nbr_unemployed') if unemployment_data else None,
-            'unemployment_commune': unemployment_data.get('commune') if unemployment_data else None,
-            'job_offers': job_offer_data.get('job_offer') if job_offer_data else None,
-            'job_offer_department': job_offer_data.get('departement') if job_offer_data else None,
-        }
-
-        # Use coordinates from search if commune info doesn't have them
-        if not result_data.get('latitude') or not result_data.get('longitude'):
-            if search_coordinates:
-                result_data['latitude'] = search_coordinates['lat']
-                result_data['longitude'] = search_coordinates['lon']
-
-        # Serialize the data
-        serializer = CitySearchResultSerializer(data=result_data)
-        if serializer.is_valid():
-            return Response(serializer.data, status=status.HTTP_200_OK)
-        else:
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-    except FileNotFoundError as e:
-        return Response(
-            {'error': 'Data file not found', 'details': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
-    except Exception as e:
-        return Response(
-            {'error': 'An error occurred while processing your search', 'details': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+			print("Coordinates provided:", search_coordinates)
 
 
-@api_view(['GET'])
-@permission_classes([AllowAny])
-def get_city_suggestions(request):
-    """
-    Get city suggestions for autocomplete
-    """
-    try:
-        query = request.GET.get('q', '').strip()
+			# Try to get city name from coordinates
+			if not city_name:
+				city_name = get_city_from_coordinates(lat, lon)
 
-        if len(query) < 2:
-            return Response([], status=status.HTTP_200_OK)
+		if not city_name:
+			return Response(
+				{'error': 'No valid city name, address, or coordinates provided'},
+				status=status.HTTP_400_BAD_REQUEST
+			)
 
-        # This is a simple implementation - in production you might want to use
-        # a proper search index or database query for better performance
-        suggestions = []
+		# Get commune information
+		commune_info = get_commune_info(city_name, "communes-france-2025.csv")
 
-        # For now, return a simple response - you can enhance this later
-        # by reading from the CSV file and filtering cities
-        return Response(suggestions, status=status.HTTP_200_OK)
+		if not commune_info:
+			return Response(
+				{'error': f'City "{city_name}" not found in database'},
+				status=status.HTTP_404_NOT_FOUND
+			)
 
-    except Exception as e:
-        return Response(
-            {'error': 'An error occurred while getting suggestions', 'details': str(e)},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR
-        )
+		# Add city category based on population and density
+		if commune_info.get('population') and commune_info.get('densite'):
+			commune_info['type_ville'] = categorize_city(
+				commune_info['population'],
+				commune_info['densite']
+			)
+
+		# Get unemployment data
+		unemployment_data = get_unemployed_data(city_name, "Unemployed.csv")
+
+		# Get job offers data for the department
+		job_offer_data = None
+		if commune_info.get('departement'):
+			job_offer_data = get_job_offers_in_department(
+				commune_info['departement'],
+				"JobOffer.csv"
+			)
+
+		# Combine all data
+		result_data = {
+			**commune_info,
+			'nbr_unemployed': unemployment_data.get('nbr_unemployed') if unemployment_data else None,
+			'unemployment_commune': unemployment_data.get('commune') if unemployment_data else "",
+			'job_offers': job_offer_data.get('job_offer') if job_offer_data else None,
+			'job_offer_department': job_offer_data.get('departement') if job_offer_data else None,
+		}
+
+		# Use coordinates from search if commune info doesn't have them
+		if not result_data.get('latitude') or not result_data.get('longitude'):
+			if search_coordinates:
+				result_data['latitude'] = search_coordinates['lat']
+				result_data['longitude'] = search_coordinates['lon']
+
+		# Serialize the data
+		serializer = CitySearchResultSerializer(data=result_data)
+		if serializer.is_valid():
+			return Response(serializer.data, status=status.HTTP_200_OK)
+		else:
+			return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+	except FileNotFoundError as e:
+		return Response(
+			{'error': 'Data file not found', 'details': str(e)},
+			status=status.HTTP_500_INTERNAL_SERVER_ERROR
+		)
+	except Exception as e:
+		return Response(
+			{'error': 'An error occurred while processing your search', 'details': str(e)},
+			status=status.HTTP_500_INTERNAL_SERVER_ERROR
+		)

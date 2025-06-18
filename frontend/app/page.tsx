@@ -9,10 +9,13 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MapPin, Moon, Sun, Search, ArrowLeft, Loader2 } from "lucide-react"
+import { MapPin, Moon, Sun, Search, ArrowLeft, Loader2, Download, BarChart3, Map } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { useLanguage } from "@/contexts/LanguageContext"
+import { ChartComponent } from "@/components/ChartComponent"
+import { MapComponent } from "@/components/SimpleMapComponent"
+import { exportToPDF } from "@/lib/pdfExport"
 
 interface Coords {
 	lat: number
@@ -20,22 +23,22 @@ interface Coords {
 }
 
 interface LocationData {
-	nom_ville: string
-	type_commune: string
-	code_postal: string
-	code_insee: string
+	nom_ville: string | null
+	type_commune: string | null
+	code_postal: string | null
+	code_insee: string | null
 	population: number | null
 	superficie_km2: number | null
 	densite: number | null
-	departement: string
-	region: string
+	departement: string | null
+	region: string | null
 	latitude: number | null
 	longitude: number | null
-	type_ville: string
+	type_ville: string | null
 	nbr_unemployed: number | null
-	unemployment_commune: string
+	unemployment_commune: string | null
 	job_offers: number | null
-	job_offer_department: string
+	job_offer_department: string | null
 }
 
 interface AutocompleteSuggestion {
@@ -195,17 +198,11 @@ export default function HackathonApp() {
 		setShowSuggestions(false)
 
 		try {
-			const requestData: any = {}
-
-			if (coords) {
-				requestData.coordinates = coords
-			}
-
-			if (address.trim()) {
-				requestData.address = address.trim()
-			}
-
-			const response = await axios.post("http://localhost:8000/api/search/", requestData)
+			const response = await axios.post("http://localhost:8000/api/search/", {
+				coordinates: coords,
+				address: address.trim(),
+				city: address.trim().split(",")[1].trim().substring(5).trim() || undefined,
+			})
 
 			setLocationData(response.data)
 			setAppState("results")
@@ -238,6 +235,18 @@ export default function HackathonApp() {
 				return "📍"
 		}
 	}
+
+	// Handle PDF export
+	const handlePDFExport = async () => {
+		if (!locationData) return;
+
+		try {
+			await exportToPDF(locationData, 'results-content');
+		} catch (error) {
+			console.error('Error exporting PDF:', error);
+			alert('Error generating PDF. Please try again.');
+		}
+	};
 
 	const resetSearch = () => {
 		setAppState("search")
@@ -495,157 +504,182 @@ export default function HackathonApp() {
 							<div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
 						</div>
 					</div>
-				)}
-
-				{/* Results State */}
+				)}				{/* Results State */}
 				{appState === "results" && locationData && (
-					<div className="space-y-6 animate-in fade-in-0 duration-300">						<div className="flex items-center justify-between animate-in slide-in-from-top-4 duration-300">
-							<h2 className="text-3xl font-bold text-gray-900 dark:text-white animate-in slide-in-from-left-6 duration-300">
+					<div className="space-y-6 animate-in fade-in-0 duration-300">
+						<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-300">
+							<h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white animate-in slide-in-from-left-6 duration-300">
 								{t('results.title')}
 							</h2>
-							<Button
-								variant="outline"
-								onClick={resetSearch}
-								className="flex items-center space-x-2 transition-all hover:scale-105 hover:shadow-md cursor-pointer dark:text-white"
-							>
-								<ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-								<span>{t('results.back')}</span>
-							</Button>
+							<div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+								<Button
+									variant="outline"
+									onClick={handlePDFExport}
+									className="flex items-center justify-center space-x-2 transition-all hover:scale-105 hover:shadow-md cursor-pointer dark:text-white"
+								>
+									<Download className="h-4 w-4" />
+									<span>Export PDF</span>
+								</Button>
+								<Button
+									variant="outline"
+									onClick={resetSearch}
+									className="flex items-center justify-center space-x-2 transition-all hover:scale-105 hover:shadow-md cursor-pointer dark:text-white"
+								>
+									<ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
+									<span>{t('results.back')}</span>
+								</Button>
+							</div>
 						</div>
 
-						<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl animate-in slide-in-from-bottom-6 duration-300 hover:shadow-2xl transition-all">
-							<CardHeader>
-								<CardTitle className="dark:text-white">Location Information</CardTitle>
-								<CardDescription className="dark:text-gray-300">
-									Detailed information about your selected location
-								</CardDescription>
-							</CardHeader>							<CardContent className="space-y-6">
-								<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-6 hover:scale-[1.02] transition-all">
-									<h3 className="text-2xl font-semibold text-blue-900 dark:text-blue-100 mb-2">
-										{locationData.nom_ville}
-									</h3>
-									<p className="text-blue-700 dark:text-blue-200 text-lg">
-										{locationData.region}
-									</p>
-									{locationData.departement && (
-										<p className="text-blue-600 dark:text-blue-300 text-md">
-											{locationData.departement}
+						<div id="results-content" className="space-y-6">
+							{/* Enhanced Info Card */}
+							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl animate-in slide-in-from-bottom-6 duration-300 hover:shadow-2xl transition-all">
+								<CardHeader>
+									<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+										<div>
+											<CardTitle className="dark:text-white text-xl sm:text-2xl">Location Information</CardTitle>
+											<CardDescription className="dark:text-gray-300">
+												Detailed information about your selected location
+											</CardDescription>
+										</div>
+										<div className="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+											<BarChart3 className="h-4 w-4" />
+											<span>Interactive Data</span>
+										</div>
+									</div>
+								</CardHeader>
+								<CardContent className="space-y-6">
+									{/* Location Header */}
+									<div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 hover:scale-[1.02] transition-all">
+										<h3 className="text-2xl sm:text-3xl font-bold text-blue-900 dark:text-blue-100 mb-2">
+											{locationData.nom_ville}
+										</h3>
+										<p className="text-blue-700 dark:text-blue-200 text-lg sm:text-xl">
+											{locationData.region}
 										</p>
+										{locationData.departement && (
+											<p className="text-blue-600 dark:text-blue-300 text-md sm:text-lg">
+												{locationData.departement}
+											</p>
+										)}
+									</div>
+
+									{/* Responsive Grid for Basic Info */}
+									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+										<div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md">
+											<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
+												<MapPin className="h-5 w-5 mr-2" />
+												Coordinates
+											</h4>
+											<div className="space-y-2 text-sm">
+												{locationData.latitude && (
+													<p className="text-gray-600 dark:text-gray-300">
+														<span className="font-medium">Lat:</span> {locationData.latitude.toFixed(6)}
+													</p>
+												)}
+												{locationData.longitude && (
+													<p className="text-gray-600 dark:text-gray-300">
+														<span className="font-medium">Long:</span> {locationData.longitude.toFixed(6)}
+													</p>
+												)}
+											</div>
+										</div>
+
+										<div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md">
+											<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">City Info</h4>
+											<div className="space-y-1 text-sm">
+												{locationData.code_postal && (
+													<p className="text-gray-600 dark:text-gray-300">
+														<span className="font-medium">Code:</span> {locationData.code_postal}
+													</p>
+												)}
+												{locationData.type_commune && (
+													<p className="text-gray-600 dark:text-gray-300">
+														<span className="font-medium">Type:</span> {locationData.type_commune}
+													</p>
+												)}
+												{locationData.type_ville && (
+													<p className="text-gray-600 dark:text-gray-300">
+														<span className="font-medium">Category:</span> {locationData.type_ville}
+													</p>
+												)}
+											</div>
+										</div>
+
+										<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md sm:col-span-2 lg:col-span-1">
+											<h4 className="font-semibold text-green-900 dark:text-green-100 mb-3">Quick Stats</h4>
+											<div className="space-y-1 text-sm">
+												{locationData.population && (
+													<p className="text-green-700 dark:text-green-300">
+														<span className="font-medium">Pop:</span> {locationData.population.toLocaleString()}
+													</p>
+												)}
+												{locationData.superficie_km2 && (
+													<p className="text-green-700 dark:text-green-300">
+														<span className="font-medium">Area:</span> {locationData.superficie_km2.toFixed(1)} km²
+													</p>
+												)}
+												{locationData.densite && (
+													<p className="text-green-700 dark:text-green-300">
+														<span className="font-medium">Density:</span> {locationData.densite.toFixed(0)}/km²
+													</p>
+												)}
+											</div>
+										</div>
+									</div>
+
+									{/* Enhanced Employment Data */}
+									{(locationData.nbr_unemployed || locationData.job_offers) && (
+										<div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg p-4 sm:p-6 hover:scale-[1.01] transition-all">
+											<h4 className="text-xl font-semibold text-yellow-900 dark:text-yellow-100 mb-4">
+												Employment Overview
+											</h4>
+											<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+												{locationData.nbr_unemployed && (
+													<div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4 animate-in slide-in-from-bottom-2 transition-all">
+														<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Unemployed</p>
+														<p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
+															{locationData.nbr_unemployed.toLocaleString()}
+														</p>
+														{locationData.unemployment_commune && (
+															<p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+																in {locationData.unemployment_commune}
+															</p>
+														)}
+													</div>
+												)}
+												{locationData.job_offers && (
+													<div className="bg-white/50 dark:bg-gray-800/50 rounded-lg p-4 animate-in slide-in-from-bottom-2 transition-all">
+														<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200 mb-1">Job Offers</p>
+														<p className="text-2xl font-bold text-yellow-700 dark:text-yellow-300">
+															{locationData.job_offers.toLocaleString()}
+														</p>
+														{locationData.job_offer_department && (
+															<p className="text-xs text-yellow-600 dark:text-yellow-400 mt-1">
+																in {locationData.job_offer_department}
+															</p>
+														)}
+													</div>
+												)}
+											</div>
+										</div>
 									)}
+								</CardContent>
+							</Card>
+
+							{/* Enhanced Data Visualization */}
+							<div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+								{/* Charts */}
+								<div className="animate-in slide-in-from-left-6 duration-500">
+									<ChartComponent data={locationData} />
 								</div>
 
-								<div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-									<div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md">
-										<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3 flex items-center">
-											<MapPin className="h-5 w-5 mr-2" />
-											Coordinates
-										</h4>
-										<div className="space-y-2">
-											{locationData.latitude && (
-												<p className="text-gray-600 dark:text-gray-300">
-													<span className="font-medium">Latitude:</span> {locationData.latitude.toFixed(6)}
-												</p>
-											)}
-											{locationData.longitude && (
-												<p className="text-gray-600 dark:text-gray-300">
-													<span className="font-medium">Longitude:</span> {locationData.longitude.toFixed(6)}
-												</p>
-											)}
-										</div>
-									</div>
-
-									<div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 hover:scale-[1.02] transition-all hover:shadow-md">
-										<h4 className="font-semibold text-gray-900 dark:text-gray-100 mb-3">City Information</h4>
-										<div className="space-y-1">
-											{locationData.code_postal && (
-												<p className="text-gray-600 dark:text-gray-300">
-													<span className="font-medium">Postal Code:</span> {locationData.code_postal}
-												</p>
-											)}
-											{locationData.type_commune && (
-												<p className="text-gray-600 dark:text-gray-300">
-													<span className="font-medium">Type:</span> {locationData.type_commune}
-												</p>
-											)}
-											{locationData.type_ville && (
-												<p className="text-gray-600 dark:text-gray-300">
-													<span className="font-medium">Category:</span> {locationData.type_ville}
-												</p>
-											)}
-										</div>
-									</div>
+								{/* Map */}
+								<div className="animate-in slide-in-from-right-6 duration-500">
+									<MapComponent data={locationData} />
 								</div>
-
-								<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-6 hover:scale-[1.01] transition-all">
-									<h4 className="text-xl font-semibold text-green-900 dark:text-green-100 mb-4">
-										City Statistics
-									</h4>
-									<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-										{locationData.population && (
-											<div className="animate-in slide-in-from-bottom-2 transition-all">
-												<p className="text-sm font-medium text-green-800 dark:text-green-200">Population</p>
-												<p className="text-lg text-green-700 dark:text-green-300">
-													{locationData.population.toLocaleString()}
-												</p>
-											</div>
-										)}
-										{locationData.superficie_km2 && (
-											<div className="animate-in slide-in-from-bottom-2 transition-all">
-												<p className="text-sm font-medium text-green-800 dark:text-green-200">Area</p>
-												<p className="text-lg text-green-700 dark:text-green-300">
-													{locationData.superficie_km2.toFixed(2)} km²
-												</p>
-											</div>
-										)}
-										{locationData.densite && (
-											<div className="animate-in slide-in-from-bottom-2 transition-all">
-												<p className="text-sm font-medium text-green-800 dark:text-green-200">Density</p>
-												<p className="text-lg text-green-700 dark:text-green-300">
-													{locationData.densite.toFixed(0)} /km²
-												</p>
-											</div>
-										)}
-									</div>
-								</div>
-
-								{/* Employment Data */}
-								{(locationData.nbr_unemployed || locationData.job_offers) && (
-									<div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-lg p-6 hover:scale-[1.01] transition-all">
-										<h4 className="text-xl font-semibold text-yellow-900 dark:text-yellow-100 mb-4">
-											Employment Data
-										</h4>
-										<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-											{locationData.nbr_unemployed && (
-												<div className="animate-in slide-in-from-bottom-2 transition-all">
-													<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Unemployed</p>
-													<p className="text-lg text-yellow-700 dark:text-yellow-300">
-														{locationData.nbr_unemployed.toLocaleString()}
-													</p>
-													{locationData.unemployment_commune && (
-														<p className="text-xs text-yellow-600 dark:text-yellow-400">
-															in {locationData.unemployment_commune}
-														</p>
-													)}
-												</div>
-											)}
-											{locationData.job_offers && (
-												<div className="animate-in slide-in-from-bottom-2 transition-all">
-													<p className="text-sm font-medium text-yellow-800 dark:text-yellow-200">Job Offers</p>
-													<p className="text-lg text-yellow-700 dark:text-yellow-300">
-														{locationData.job_offers.toLocaleString()}
-													</p>
-													{locationData.job_offer_department && (
-														<p className="text-xs text-yellow-600 dark:text-yellow-400">
-															in {locationData.job_offer_department}
-														</p>
-													)}
-												</div>
-											)}
-										</div>
-									</div>
-								)}
-							</CardContent>
-						</Card>
+							</div>
+						</div>
 					</div>
 				)}
 			</main>
