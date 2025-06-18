@@ -13,16 +13,19 @@ interface LocationData {
 }
 
 interface MapComponentProps {
-  data: LocationData;
+  data: LocationData | string;
 }
 
 // Create a simple map component that can be dynamically imported
 const MapDisplay = dynamic(
   () => {
     return import('react-leaflet').then((mod) => {
-      const { MapContainer, TileLayer, Marker, Popup } = mod;
+      const { MapContainer, TileLayer, Marker, Popup } = mod;      return ({ data }: MapComponentProps) => {
+        // Handle case where data might be a string (error message)
+        if (typeof data === 'string') {
+          return null;
+        }
 
-      return ({ data }: MapComponentProps) => {
         // Import Leaflet icon dynamically
         useEffect(() => {
           import('leaflet').then((L) => {
@@ -85,6 +88,18 @@ export function MapComponent({ data }: MapComponentProps) {
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Handle case where data might be a string (error message)
+  if (typeof data === 'string') {
+    return (
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
+        <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">Location Map</h3>
+        <div className="h-64 bg-red-50 border border-red-200 rounded-lg flex items-center justify-center">
+          <p className="text-red-600">Unable to display map: {data}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!isClient) {
     return (

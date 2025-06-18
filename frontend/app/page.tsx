@@ -22,25 +22,6 @@ interface Coords {
 	lon: number
 }
 
-interface LocationData {
-	nom_ville: string | null
-	type_commune: string | null
-	code_postal: string | null
-	code_insee: string | null
-	population: number | null
-	superficie_km2: number | null
-	densite: number | null
-	departement: string | null
-	region: string | null
-	latitude: number | null
-	longitude: number | null
-	type_ville: string | null
-	nbr_unemployed: number | null
-	unemployment_commune: string | null
-	job_offers: number | null
-	job_offer_department: string | null
-}
-
 interface EnhancedLocationData {
 	// Basic city information
 	nom_ville: string
@@ -196,8 +177,8 @@ export default function HackathonApp() {
 					fullAddress: feature.fulltext,
 					type: feature.kind,
 					coordinates: {
-						lat: feature.x,
-						lon: feature.y,
+						lat: feature.y,
+						lon: feature.x,
 					},
 				})
 			}
@@ -252,15 +233,19 @@ export default function HackathonApp() {
 				coordinates: coords,
 				address: address.trim(),
 				city: address.trim().split(",")[1]?.trim()?.substring(5)?.trim() || undefined,
-			})
-
-			// The API returns { stats: {...}, formatted_output: "...", filename: "..." }
+			})			// The API returns { stats: {...}, formatted_output: "...", filename: "..." }
 			// We need the stats object which contains the enhanced location data
-			if (response.data.stats) {
+			if (response.data.stats && typeof response.data.stats === 'object') {
 				setLocationData(response.data.stats)
-			} else {
+			} else if (typeof response.data === 'object' && response.data.nom_ville) {
 				// Fallback if the API returns data directly
 				setLocationData(response.data)
+			} else {
+				// Handle case where API returns error string
+				const errorMessage = typeof response.data === 'string' ? response.data : 'Invalid location data format';
+				setError(errorMessage);
+				setAppState("search");
+				return;
 			}
 			setAppState("results")
 		} catch (err: any) {

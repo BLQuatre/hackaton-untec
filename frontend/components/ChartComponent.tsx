@@ -25,15 +25,24 @@ interface EnhancedLocationData {
 }
 
 interface ChartComponentProps {
-  data: LocationData | EnhancedLocationData;
+  data: LocationData | EnhancedLocationData | string;
 }
 
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8', '#82CA9D'];
 
 export function ChartComponent({ data }: ChartComponentProps) {
+  // Handle case where data might be a string (error message)
+  if (!data || typeof data !== 'object') {
+    return (
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+        <p className="text-red-600">Unable to display chart: {typeof data === 'string' ? data : 'Invalid data format'}</p>
+      </div>
+    );
+  }
+
   // Helper function to check if data is enhanced
   const isEnhanced = (data: any): data is EnhancedLocationData => {
-    return 'Unemployed_people' in data || 'Job_Offer_in_Departement' in data;
+    return data && typeof data === 'object' && ('Unemployed_people' in data || 'Job_Offer_in_Departement' in data);
   };
 
   const unemployedCount = isEnhanced(data) ? (data.Unemployed_people || 0) : (data.nbr_unemployed || 0);

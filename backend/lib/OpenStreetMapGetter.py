@@ -123,9 +123,9 @@ def DataProvider(adresse, lat, lon) :
 		transport_radius = 500
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
-			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
               "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician", 
+              "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 300),
 			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 1000),
@@ -141,9 +141,9 @@ def DataProvider(adresse, lat, lon) :
 		transport_radius = 1000
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
-			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
               "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician", 
+              "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 500),
 			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 2000),
@@ -159,9 +159,9 @@ def DataProvider(adresse, lat, lon) :
 		transport_radius = 2000
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
-			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
               "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician", 
+              "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 0),
 			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 0),
@@ -177,9 +177,9 @@ def DataProvider(adresse, lat, lon) :
 		transport_radius = 3000
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
-			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
               "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician", 
+              "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 2000),
 			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 5000),
@@ -195,9 +195,9 @@ def DataProvider(adresse, lat, lon) :
 		transport_radius = 5000
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
-			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
               "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician", 
+              "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 5000),
 			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 10000),
@@ -305,13 +305,13 @@ def Create_score_system(adresse, lat, lon) :
 def Costia_getData_with_adresse(adresse) :
 	lat, lon = utils.geocode_adresse(adresse)
 	if not lat and not lon :
-		return "Uknown adresse"
+		return "No data found for this address"
 	return DataProvider(adresse, lat, lon)
 
 def Costia_getData_with_coordinates(lat, lon) :
 	adresse = utils.reverse_geocode(lat, lon)
 	if adresse == "Adresse inconnue" :
-		return "Uknown location"
+		return "No data found for this address"
 	return DataProvider(adresse, lat, lon)
 
 if __name__ == "__main__":

@@ -9,7 +9,7 @@ def normalize(text):
     text = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
     return text
 
-def get_unemployed(nom_ville, csv_path="../data/raw/Unemployed.csv"):
+def get_unemployed(nom_ville, csv_path="./data/raw/Unemployed.csv"):
     try :
         nom_ville_norm = normalize(nom_ville)
         df = pd.read_csv(csv_path, sep=";", encoding="utf-8")
@@ -48,7 +48,7 @@ def get_unemployed(nom_ville, csv_path="../data/raw/Unemployed.csv"):
         print(f"Erreur lors de la recherche des données de chômage: {e}")
         return None
 
-def get_job_offer_in_dep(nom_departement, csv_path="../data/raw/JobOffer.csv"):
+def get_job_offer_in_dep(nom_departement, csv_path="./data/raw/JobOffer.csv"):
     try :
         nom_departement_norm = normalize(nom_departement)
         df = pd.read_csv(csv_path, sep=";", encoding="utf-8")

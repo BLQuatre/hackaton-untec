@@ -44,7 +44,7 @@ def get_area_id(ville):
     return None
 
 def reverse_geocode(lat, lon):
-    url = "https://api-adresse.data.gouv.fr/reverse/"
+    url = "https://api-adresse.data.gouv.fr/reverse"
     params = {"lat": lat, "lon": lon}
     resp = requests.get(url, params=params)
     data = resp.json()
