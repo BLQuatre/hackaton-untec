@@ -11,7 +11,7 @@ with open("raw/Unemployed.csv", "r", encoding="utf-8") as unemployed_file:
 	unemployed_file_reader = csv.DictReader(unemployed_file, delimiter=';')
 	for row in unemployed_file_reader:
 		try:
-			cp_commune = row["commune"].split(' ')[-1]
+			cp_commune = row["Commune"].split(' ')[-1]
 			unemployed_cache[cp_commune] = int(row["nbr"].replace(' ', '')) if row["nbr"] else 0
 
 			print(f"Processing unemployed data for commune: {cp_commune}")
@@ -22,7 +22,7 @@ with open("raw/JobOffer.csv", "r", encoding="utf-8") as job_offers_file:
 	job_offers_file_reader = csv.DictReader(job_offers_file, delimiter=';')
 	for row in job_offers_file_reader:
 		try:
-			cp_dept = row["departement"].split(' ')[-1]
+			cp_dept = row["Departement"].split(' ')[-1]
 			job_offers_cache[cp_dept] = int(row["nbr"].replace(' ', '')) if row["nbr"] else 0
 
 			print(f"Processing job offers data for department: {cp_dept}")

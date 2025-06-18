@@ -2,15 +2,15 @@ import pandas as pd
 
 def categorie_ville(population, densite):
 	if population < 2000 and densite < 150:
-		return "village"
+		return "Village"
 	elif population < 20000 and densite < 500:
-		return "petite ville"
+		return "Little_City"
 	elif population < 100000 and densite < 2000:
-		return "ville moyenne"
+		return "Mid-sized_City"
 	elif population < 500000 :
-		return "grande ville"
+		return "Large_City"
 	else:
-		return "tres grande ville"
+		return "Metropolis"
 
 def get_commune_info(nom_ville, csv_path="../data/raw/communes-france-2025.csv"):
 	df = pd.read_csv(csv_path, sep=None, engine='python')

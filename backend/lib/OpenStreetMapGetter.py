@@ -1,8 +1,9 @@
-from . import citysize
+import citysize
 import requests
-from . import worker
-from . import school
-from . import utils
+import worker
+import school
+import utils
+import cost_scoring
 from io import StringIO
 # from . import TxttoPDF
 
@@ -106,7 +107,7 @@ def print_stats_data(adresse, lat, lon, stats) :
 					print("|\t - ", info, ":", data, file=buffer)
 		else :
 			print(key, ":", value, file=buffer)
-		if key == "type_ville" :
+		if key == "city_type" :
 			print("\n", file=buffer)
 	output = buffer.getvalue()
 	buffer.close()
@@ -115,59 +116,108 @@ def print_stats_data(adresse, lat, lon, stats) :
 def DataProvider(adresse, lat, lon) :
 	city = utils.get_city_from_coords(lat, lon)
 	stats = citysize.get_commune_info(city)
-	stats["type_ville"] = citysize.categorie_ville(stats['population'], stats['densite'])
+	stats["city_type"] = citysize.categorie_ville(stats['population'], stats['densite'])
 
-	if stats["type_ville"] == "tres grande ville" :
+	if stats["city_type"] == "Metropolis" :
+		shop_radius = 500
+		transport_radius = 500
 		queries = [
-			("amenity", ["restaurant", "fast_food"], "Shop", 500),
+			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+              "convenience", "bakery", "butcher", "deli", "greengrocer",
+              "books", "gift", "hairdresser", "beauty", "optician", 
+              "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 300),
-			("amenity", ["hospital", "clinic"], "Healthcare", 1000),
-			("amenity", ["police", "fire_station"], "Public Services", 2000),
+			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 1000),
+			("amenity", ["police", "fire_station"], "Public_Services", 2000),
 			("amenity", ["school"], "School", 500),
+			("highway", ["bus_stop"], "Transport", 1000),
+			("station", ["subway"], "Transport", 1000),
+			("railway", ["tram_stop"], "Transport", 1000),
+			("railway", ["station"], "Train_Station", 1000),
 		]
-	elif stats["type_ville"] == "grande ville" :
+	elif stats["city_type"] == "Large_City" :
+		shop_radius = 1000
+		transport_radius = 1000
 		queries = [
-			("amenity", ["restaurant", "fast_food"], "Shop", 1000),
+			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+              "convenience", "bakery", "butcher", "deli", "greengrocer",
+              "books", "gift", "hairdresser", "beauty", "optician", 
+              "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 500),
-			("amenity", ["hospital", "clinic"], "Healthcare", 2000),
-			("amenity", ["police", "fire_station"], "Public Services", 3000),
+			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 2000),
+			("amenity", ["police", "fire_station"], "Public_Services", 3000),
 			("amenity", ["school"], "School", 1000),
 			("highway", ["bus_stop"], "Transport", 1000),
 			("station", ["subway"], "Transport", 1000),
 			("railway", ["tram_stop"], "Transport", 1000),
-			("railway", ["station"], "Train Station", 1000),
+			("railway", ["station"], "Train_Station", 1000),
 		]
-	elif stats["type_ville"] == "ville moyenne" :
+	elif stats["city_type"] == "Mid-sized_City" :
+		shop_radius = 2000
+		transport_radius = 2000
 		queries = [
-			("amenity", ["restaurant", "fast_food"], "Shop", 2000),
+			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+              "convenience", "bakery", "butcher", "deli", "greengrocer",
+              "books", "gift", "hairdresser", "beauty", "optician", 
+              "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 0),
-			("amenity", ["hospital", "clinic"], "Healthcare", 0),
-			("amenity", ["police", "fire_station"], "Public Services", 5000),
+			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 0),
+			("amenity", ["police", "fire_station"], "Public_Services", 5000),
 			("amenity", ["school"], "School", 0),
+			("highway", ["bus_stop"], "Transport", 1000),
+			("station", ["subway"], "Transport", 1000),
+			("railway", ["tram_stop"], "Transport", 1000),
+			("railway", ["station"], "Train_Station", 1000),
 		]
-	elif stats["type_ville"] == "petite ville" :
+	elif stats["city_type"] == "Little_City" :
+		shop_radius = 3000
+		transport_radius = 3000
 		queries = [
-			("amenity", ["restaurant", "fast_food"], "Shop", 3000),
+			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+              "convenience", "bakery", "butcher", "deli", "greengrocer",
+              "books", "gift", "hairdresser", "beauty", "optician", 
+              "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 2000),
-			("amenity", ["hospital", "clinic"], "Healthcare", 5000),
-			("amenity", ["police", "fire_station"], "Public Services", 5000),
+			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 5000),
+			("amenity", ["police", "fire_station"], "Public_Services", 5000),
 			("amenity", ["school"], "School", 3000),
+			("highway", ["bus_stop"], "Transport", 1000),
+			("station", ["subway"], "Transport", 1000),
+			("railway", ["tram_stop"], "Transport", 1000),
+			("railway", ["station"], "Train_Station", 1000),
 		]
-	elif stats["type_ville"] == "village" :
+	elif stats["city_type"] == "Village" :
+		shop_radius = 5000
+		transport_radius = 5000
 		queries = [
-			("amenity", ["restaurant", "fast_food"], "Shop", 5000),
+			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
+			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone", 
+              "convenience", "bakery", "butcher", "deli", "greengrocer",
+              "books", "gift", "hairdresser", "beauty", "optician", 
+              "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 5000),
-			("amenity", ["hospital", "clinic"], "Healthcare", 10000),
-			("amenity", ["police", "fire_station"], "Public Services", 10000),
+			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 10000),
+			("amenity", ["police", "fire_station"], "Public_Services", 10000),
 			("amenity", ["school"], "School", 5000),
+			("highway", ["bus_stop"], "Transport", 1000),
+			("station", ["subway"], "Transport", 1000),
+			("railway", ["tram_stop"], "Transport", 1000),
+			("railway", ["station"], "Train_Station", 1000),
 		]
 	else :
 		exit(0)
 
 	# 0 is city other is radius
+	shop_total_nbr = 0
+	shop_total_dist = 0
+
 	transport_total_nbr = 0
 	transport_total_dist = 0
-	transport_radius = 1000
+
 
 	for info_type, info_filters, info_explicit, radius in queries:
 		total_dist = 0
@@ -186,6 +236,9 @@ def DataProvider(adresse, lat, lon) :
 		if info_explicit == "Transport" :
 			transport_total_nbr += nbr
 			transport_total_dist += total_dist
+		if info_explicit == "Shop" :
+			shop_total_nbr += nbr
+			shop_total_dist += total_dist
 		if nbr == 0 :
 			average = 0
 		else :
@@ -204,37 +257,50 @@ def DataProvider(adresse, lat, lon) :
 		stats["Transport_radius"] = transport_radius
 		stats["Transport_average_distance"] = transport_average
 
+	if shop_total_nbr == 0:
+		shop_average = 0
+	else:
+		shop_average = round(transport_total_dist / transport_total_nbr, 1)
+		stats["Shop_nbr"] = shop_total_nbr
+		stats["Shop_radius"] = shop_radius
+		stats["Shop_average_distance"] = shop_average
+
 	if stats["population"] >= 5000 :
 		stats["Unemployed_people"] = worker.get_unemployed(city)["nbr_unemployed"]
 		stats["Proportion of unemployed"] = str(round((worker.get_unemployed(city)["nbr_unemployed"] * 100) / stats["population"])) + "%"
 		stats["Job_Offer_in_Departement"] = worker.get_job_offer_in_dep(stats["departement"])["job_offer"]
 
-	if stats["type_ville"] == "tres grande ville" :
+	if stats["city_type"] == "Metropolis" :
 		stats["School_Charge"] = school.school_charge_radius(lat, lon, 500)
-	elif stats["type_ville"] == "grande ville" :
+	elif stats["city_type"] == "Large_City" :
 		stats["School_Charge"] = school.school_charge_radius(lat, lon, 1000)
-	elif stats["type_ville"] == "ville moyenne" :
+	elif stats["city_type"] == "Mid-sized_City" :
 		stats["School_Charge"] = school.school_charge_city(city)
-	elif stats["type_ville"] == "petite ville":
+	elif stats["city_type"] == "Little_City":
 		stats["School_Charge"] = school.school_charge_radius(city)
 		if stats["School_Charge"] == None :
 			stats["School_Charge"] = school.school_charge_radius(lat, lon, 3000)
-	elif stats["type_ville"] == "village" :
+	elif stats["city_type"] == "Village" :
 		stats["School_Charge"] = school.school_charge_radius(lat, lon, 5000)
 	formatted_output = print_stats_data(adresse, lat, lon, stats)
 
 	clean_adresse = adresse.replace("/", "_").replace("\\", "_").replace(":", "_").replace(" ", "_")
 	filename = f"CostIAData_{lat},{lon}_{clean_adresse}.txt"
-	with open(filename, "w") as f:
-		f.write(formatted_output)
+	# with open(filename, "w") as f:
+	# 	f.write(formatted_output)
 	# pdf_filename = f"PDF_report.pdf"
 	# TxttoPDF.text_to_pdf(formatted_output, pdf_filename)
-
+	# scores = cost_scoring.calculate_cost_score(stats)
+	# for index, score in scores.items() :
+	# 	print(index, ":", score)
 	return {
 		'stats': stats,
 		'formatted_output': formatted_output,
 		'filename': filename
 	}
+
+def Create_score_system(adresse, lat, lon) :
+	data = DataProvider(adresse, lat, lon)
 
 def Costia_getData_with_adresse(adresse) :
 	lat, lon = utils.geocode_adresse(adresse)
@@ -250,8 +316,8 @@ def Costia_getData_with_coordinates(lat, lon) :
 
 if __name__ == "__main__":
 	# adresse = "24ir9 fapfjal, 8ru2o"
-	# adresse = "8 rue Riquet, 750000 Paris"
-	adresse = "20 Quai Frissard, 76600 Le Havre"
+	adresse = "8 rue Riquet, 750000 Paris"
+	# adresse = "20 Quai Frissard, 76600 Le Havre"
 	result = Costia_getData_with_adresse(adresse)
 	if isinstance(result, dict):
 		print(result['formatted_output'])

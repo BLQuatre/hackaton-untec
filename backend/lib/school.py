@@ -2,7 +2,7 @@ import pandas as pd
 import re
 import unicodedata
 from collections import Counter
-from . import utils
+import utils
 
 CAPACITE_MAX_PAR_CLASSE = 30
 
