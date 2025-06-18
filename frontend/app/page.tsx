@@ -102,13 +102,15 @@ export default function HackathonApp() {
 
 	const [latInput, setLatInput] = useState("")
 	const [lonInput, setLonInput] = useState("")
-
 	// Autocomplete state
 	const [suggestions, setSuggestions] = useState<AutocompleteSuggestion[]>([])
 	const [showSuggestions, setShowSuggestions] = useState(false)
 	const [selectedSuggestionIndex, setSelectedSuggestionIndex] = useState(-1)
 	const inputRef = useRef<HTMLInputElement>(null)
 	const suggestionsRef = useRef<HTMLDivElement>(null)
+	const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+	const lastRequestTimeRef = useRef<number>(0)
+	const pendingRequestRef = useRef<string | null>(null)
 
 	// Toggle dark mode
 	const toggleDarkMode = () => {
@@ -132,24 +134,43 @@ export default function HackathonApp() {
 		setShowSuggestions(false)
 		setSelectedSuggestionIndex(-1)
 	}
+	// Debounced search function with intelligent queuing
+	const executeSuggestionSearch = async (searchValue: string) => {
+		const currentTime = Date.now()
+		const timeSinceLastRequest = currentTime - lastRequestTimeRef.current
 
-	// Handle input change and show suggestions
-	const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-		const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, '')
-		setAddress(value)
+		// If less than 200ms since last request, queue it
+		if (timeSinceLastRequest < 200) {
+			// Override any pending request with the new one
+			pendingRequestRef.current = searchValue
 
-		if (address !== value)
-			setCoords(null)
-		setSelectedSuggestionIndex(-1)
+			// Schedule execution after the remaining time
+			const remainingTime = 200 - timeSinceLastRequest
 
-		if (value.length < 5) {
-			setSuggestions([])
-			setShowSuggestions(false)
-			return
+			if (searchTimeoutRef.current) {
+				clearTimeout(searchTimeoutRef.current)
+			}
+
+			searchTimeoutRef.current = setTimeout(() => {
+				// Check if this is still the latest pending request
+				if (pendingRequestRef.current === searchValue) {
+					pendingRequestRef.current = null
+					lastRequestTimeRef.current = Date.now()
+					performSuggestionSearch(searchValue)
+				}
+			}, remainingTime)
+		} else {
+			// Execute immediately and clear any pending requests
+			pendingRequestRef.current = null
+			lastRequestTimeRef.current = currentTime
+			await performSuggestionSearch(searchValue)
 		}
+	}
 
-		setTimeout(async () => {
-			const response = await axios.get(`https://data.geopf.fr/geocodage/completion?text=${value}`)
+	// Actual search execution
+	const performSuggestionSearch = async (searchValue: string) => {
+		try {
+			const response = await axios.get(`https://data.geopf.fr/geocodage/completion?text=${searchValue}`)
 			if (response.status !== 200 || !response.data) {
 				setSuggestions([])
 				setShowSuggestions(false)
@@ -170,8 +191,6 @@ export default function HackathonApp() {
 				if (feature.kind !== "housenumber" && feature.kind !== "street")
 					continue
 
-				console.log("Feature:", feature)
-
 				suggestions.push({
 					id: i,
 					fullAddress: feature.fulltext,
@@ -184,7 +203,37 @@ export default function HackathonApp() {
 			}
 			setSuggestions(suggestions)
 			setShowSuggestions(true)
-		}, 1000)
+		} catch (error) {
+			console.error('Error fetching suggestions:', error)
+			setSuggestions([])
+			setShowSuggestions(false)
+		}
+	}
+
+	// Handle input change and show suggestions
+	const handleInputChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value.replace(/[^a-zA-Z0-9\s]/g, '')
+		setAddress(value)
+
+		if (address !== value)
+			setCoords(null)
+		setSelectedSuggestionIndex(-1)
+
+		// Clear existing timeout
+		if (searchTimeoutRef.current) {
+			clearTimeout(searchTimeoutRef.current)
+		}
+
+		if (value.length < 5) {
+			setSuggestions([])
+			setShowSuggestions(false)
+			// Clear any pending requests since input is too short
+			pendingRequestRef.current = null
+			return
+		}
+
+		// Use the new debounced search function
+		await executeSuggestionSearch(value)
 	}
 
 	// Handle suggestion selection
@@ -197,6 +246,16 @@ export default function HackathonApp() {
 			setCoords(suggestion.coordinates)
 		}
 	}
+	// Cleanup timeout on unmount
+	useEffect(() => {
+		return () => {
+			if (searchTimeoutRef.current) {
+				clearTimeout(searchTimeoutRef.current)
+			}
+			// Clear any pending requests
+			pendingRequestRef.current = null
+		}
+	}, [])
 
 	// Close suggestions when clicking outside
 	useEffect(() => {
@@ -233,8 +292,12 @@ export default function HackathonApp() {
 				coordinates: coords,
 				address: address.trim(),
 				city: address.trim().split(",")[1]?.trim()?.substring(5)?.trim() || undefined,
-			})			// The API returns { stats: {...}, formatted_output: "...", filename: "..." }
+			})
+			// The API returns { stats: {...}, formatted_output: "...", filename: "..." }
 			// We need the stats object which contains the enhanced location data
+			console.log("API response:")
+			console.log(response.data)
+			console.log("-----------")
 			if (response.data.stats && typeof response.data.stats === 'object') {
 				setLocationData(response.data.stats)
 			} else if (typeof response.data === 'object' && response.data.nom_ville) {

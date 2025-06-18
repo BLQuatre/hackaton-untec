@@ -51,11 +51,13 @@ def search_location(request):
 			return Response(res, status=status.HTTP_200_OK)
 
 	except FileNotFoundError as e:
+		print(f"File not found: {e}")
 		return Response(
 			{'error': 'Data file not found', 'details': str(e)},
 			status=status.HTTP_500_INTERNAL_SERVER_ERROR
 		)
 	except Exception as e:
+		print(f"An error occurred: {e}")
 		return Response(
 			{'error': 'An error occurred while processing your search', 'details': str(e)},
 			status=status.HTTP_500_INTERNAL_SERVER_ERROR

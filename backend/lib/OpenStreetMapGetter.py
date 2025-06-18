@@ -124,9 +124,9 @@ def DataProvider(adresse, lat, lon) :
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
 			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
-              "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician",
-              "sports", "toys"], "Shop", shop_radius),
+			  "convenience", "bakery", "butcher", "deli", "greengrocer",
+			  "books", "gift", "hairdresser", "beauty", "optician",
+			  "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 300),
 			("amenity", ["hospital"], "Hospital", 2000),
 			("amenity", ["clinic", "doctors"], "Healthcare", 1000),
@@ -143,9 +143,9 @@ def DataProvider(adresse, lat, lon) :
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
 			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
-              "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician",
-              "sports", "toys"], "Shop", shop_radius),
+			  "convenience", "bakery", "butcher", "deli", "greengrocer",
+			  "books", "gift", "hairdresser", "beauty", "optician",
+			  "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 500),
 			("amenity", ["hospital"], "Hospital", 2000),
 			("amenity", ["clinic", "doctors"], "Healthcare", 2000),
@@ -162,9 +162,9 @@ def DataProvider(adresse, lat, lon) :
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
 			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
-              "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician",
-              "sports", "toys"], "Shop", shop_radius),
+			  "convenience", "bakery", "butcher", "deli", "greengrocer",
+			  "books", "gift", "hairdresser", "beauty", "optician",
+			  "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 0),
 			("amenity", ["hospital"], "Hospital", 0),
 			("amenity", ["clinic", "doctors"], "Healthcare", 0),
@@ -181,9 +181,9 @@ def DataProvider(adresse, lat, lon) :
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
 			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
-              "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician",
-              "sports", "toys"], "Shop", shop_radius),
+			  "convenience", "bakery", "butcher", "deli", "greengrocer",
+			  "books", "gift", "hairdresser", "beauty", "optician",
+			  "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 2000),
 			("amenity", ["hospital"], "Hospital", 5000),
 			("amenity", ["clinic", "doctors"], "Healthcare", 5000),
@@ -200,9 +200,9 @@ def DataProvider(adresse, lat, lon) :
 		queries = [
 			("amenity", ["restaurant", "fast_food", "cafe", "bar", "pub"], "Shop", shop_radius),
 			("shop", ["clothes", "shoes", "jewelry", "electronics", "mobile_phone",
-              "convenience", "bakery", "butcher", "deli", "greengrocer",
-              "books", "gift", "hairdresser", "beauty", "optician",
-              "sports", "toys"], "Shop", shop_radius),
+			  "convenience", "bakery", "butcher", "deli", "greengrocer",
+			  "books", "gift", "hairdresser", "beauty", "optician",
+			  "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 5000),
 			("amenity", ["hospital"], "Hospital", 10000),
 			("amenity", ["clinic", "doctors"], "Healthcare", 10000),
@@ -261,18 +261,19 @@ def DataProvider(adresse, lat, lon) :
 		stats["Transport_nbr"] = transport_total_nbr
 		stats["Transport_radius"] = transport_radius
 		stats["Transport_average_distance"] = transport_average
-
 	if shop_total_nbr == 0:
 		shop_average = 0
 	else:
-		shop_average = round(transport_total_dist / transport_total_nbr, 1)
+		shop_average = round(shop_total_dist / shop_total_nbr, 1)
 		stats["Shop_nbr"] = shop_total_nbr
 		stats["Shop_radius"] = shop_radius
 		stats["Shop_average_distance"] = shop_average
-
 	if stats["population"] >= 5000 :
 		stats["Unemployed_people"] = worker.get_unemployed(city)["nbr_unemployed"]
-		stats["Proportion of unemployed"] = str(round((worker.get_unemployed(city)["nbr_unemployed"] * 100) / stats["population"])) + "%"
+		if stats["population"] > 0:
+			stats["Proportion of unemployed"] = str(round((worker.get_unemployed(city)["nbr_unemployed"] * 100) / stats["population"])) + "%"
+		else:
+			stats["Proportion of unemployed"] = "N/A"
 		stats["Job_Offer_in_Departement"] = worker.get_job_offer_in_dep(stats["departement"])["job_offer"]
 
 	if stats["city_type"] == "Metropolis" :
