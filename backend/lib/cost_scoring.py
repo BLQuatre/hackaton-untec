@@ -1,162 +1,107 @@
-"""
-Module pour calculer les scores de coûts et de qualité de vie
-basé sur les données géographiques et démographiques.
-"""
-
 def calculate_cost_score(stats):
-    """
-    Calcule un score global et des scores par thématique basés sur les données fournies
-    
-    Args:
-        stats (dict): Dictionnaire contenant toutes les données statistiques du lieu
-        
-    Returns:
-        dict: Dictionnaire contenant les scores par thématique et le score global
-    """
     scores = {}
     
-    # 1. Score Travail (20% du total)
+    # 20% du total
     scores["Travail"] = calculate_work_score(stats)
     
-    # 2. Score Transport (20% du total)
+    # 20% du total
     scores["Transport"] = calculate_transport_score(stats)
     
-    # 3. Score Services publics (15% du total)
+    # 15% du total
     scores["Service public"] = calculate_public_services_score(stats)
     
-    # 4. Score Éducation (15% du total)
+    # 15% du total
     scores["Éducation"] = calculate_education_score(stats)
     
-    # 5. Score Commerce (15% du total)
+    # 15% du total
     scores["Commerce"] = calculate_commerce_score(stats)
     
-    # 6. Score Santé (15% du total)
+    # 15% du total
     scores["Santé"] = calculate_health_score(stats)
     
-    # Score global (moyenne pondérée)
     weights = {
         "Travail": 0.20,
         "Transport": 0.20, 
         "Service public": 0.15,
         "Éducation": 0.15,
         "Commerce": 0.15,
-        "Santé": 0.15
+        "Santé": 0.20,
     }
     
     global_score = sum(scores[category] * weights[category] for category in scores)
-    scores["Global"] = round(global_score, 1)
+    scores["Global"] = round(global_score, 0)
     
     return scores
 
 def calculate_work_score(stats):
-    """
-    Calcule le score pour la thématique Travail
-    
-    Args:
-        stats (dict): Dictionnaire contenant les données statistiques
-        
-    Returns:
-        int: Score sur 100 points
-    """
-    # Valeurs de référence pour normalisation
     unemployment_str = stats.get("Proportion of unemployed", "0%")
     unemployment_rate = float(unemployment_str.strip("%") if "%" in unemployment_str else unemployment_str)
     job_offers = stats.get("Job_Offer_in_Departement", 0)
     population = stats.get("population", 1)
     
-    # Indicateurs
-    unemployment_score = max(0, 100 - (unemployment_rate * 4))  # 0% = 100pts, 25% = 0pts
-    job_opportunity_score = min(100, (job_offers / (population/100)) * 2)  # Ratio offres/pop
+    # 60% chômage, 40% offres
+    unemployment_score = max(0, 100 - (unemployment_rate * 3))
+    job_opportunity_score = min(100, (job_offers / (population/100)) * 2)
     
-    # Score final (pondéré)
-    final_score = round(unemployment_score * 0.6 + job_opportunity_score * 0.4)
-    return min(100, max(0, final_score))  # Garantir entre 0 et 100
+    final_score = round(unemployment_score * 0.6 + job_opportunity_score * 0.6)
+    return min(100, max(0, final_score))
 
 def calculate_transport_score(stats):
-    """
-    Calcule le score pour la thématique Transport
-    
-    Args:
-        stats (dict): Dictionnaire contenant les données statistiques
-        
-    Returns:
-        int: Score sur 100 points
-    """
     transport_nbr = stats.get("Transport_nbr", 0)
     transport_avg_distance = stats.get("Transport_average_distance", 2000)
     train_station = stats.get("Train Station_nbr", 0)
     city_type = stats.get("city_type", "")
     
-    # Ajustement selon type de ville
     if city_type == "Metropolis":
-        expected_transport = 100
-        max_distance = 300
+        expected_transport = 80
     elif city_type == "Large_City":
-        expected_transport = 50
-        max_distance = 500
-    elif city_type == "Mid-sized_City":
-        expected_transport = 30
-        max_distance = 700
+        expected_transport = 40
     else:
-        expected_transport = 10
-        max_distance = 1000
+        expected_transport = 20
     
-    # Calcul des scores
     transport_density_score = min(100, (transport_nbr / expected_transport) * 100)
-    distance_score = max(0, 100 - ((transport_avg_distance / max_distance) * 100))
-    train_bonus = 25 if train_station > 0 else 0
     
-    # Score final
-    final_score = round((transport_density_score * 0.4) + (distance_score * 0.4) + train_bonus)
+    # Calculer le score de distance seulement si la distance moyenne est disponible
+    if transport_avg_distance > 0:
+        distance_score = max(0, 100 - (transport_avg_distance / 10))
+    else:
+        distance_score = 50  # Valeur par défaut si pas de données
+    
+    # Bonus train plus élevé
+    train_bonus = 36 if train_station > 0 else 0
+    
+    final_score = round((transport_density_score * 0.6) + (distance_score * 0.3) + train_bonus)
     return min(100, max(0, final_score))
 
 def calculate_public_services_score(stats):
-    """
-    Calcule le score pour la thématique Services publics
-    
-    Args:
-        stats (dict): Dictionnaire contenant les données statistiques
-        
-    Returns:
-        int: Score sur 100 points
-    """
     services_nbr = stats.get("Public_Services_nbr", 0)
     services_distance = stats.get("Public_Services_average_distance", 3000)
     city_type = stats.get("city_type", "")
     
-    # Ajustement selon type de ville
-    if city_type in ["Metropolis", "Large_City"]:
+    if city_type == "Metropolis" :
         expected_services = 10
-        max_distance = 1000
+    elif city_type ==  "Large_City" :
+        expected_services = 8
     elif city_type == "Mid-sized_City":
         expected_services = 5
-        max_distance = 2000
     else:
         expected_services = 2
-        max_distance = 5000
     
-    # Calcul des scores
     services_density_score = min(100, (services_nbr / expected_services) * 100)
-    distance_score = max(0, 100 - ((services_distance / max_distance) * 100))
     
-    # Score final
-    final_score = round((services_density_score * 0.5) + (distance_score * 0.5))
+    # Calcul de distance seulement si données disponibles
+    if services_distance > 0:
+        distance_score = max(0, 100 - (services_distance / 30))
+    else:
+        distance_score = 40  # Valeur par défaut
+    
+    final_score = round((services_density_score * 0.7) + (distance_score * 0.3))
     return min(100, max(0, final_score))
 
 def calculate_education_score(stats):
-    """
-    Calcule le score pour la thématique Éducation
-    
-    Args:
-        stats (dict): Dictionnaire contenant les données statistiques
-        
-    Returns:
-        int: Score sur 100 points
-    """
     schools_nbr = stats.get("School_nbr", 0)
     schools_distance = stats.get("School_average_distance", 1000)
     
-    # Analyse de School_Charge si disponible
     school_charge = stats.get("School_Charge", {})
     if not isinstance(school_charge, dict):
         school_charge = {}
@@ -170,11 +115,10 @@ def calculate_education_score(stats):
     optimal_capacity = status_recap.get("Optimal", 0)
     total_schools = school_charge.get("Total_of_Elementary_School", 0)
     
-    # Calcul des scores
-    school_density_score = min(100, schools_nbr * 5)  # 20+ écoles = 100%
+    # 30% densité, 30% distance, 40% capacité
+    school_density_score = min(100, schools_nbr * 4)
     distance_score = max(0, 100 - ((schools_distance / 1000) * 100))
     
-    # Score de capacité des écoles
     capacity_score = 0
     if total_schools > 0:
         capacity_score = (
@@ -183,7 +127,6 @@ def calculate_education_score(stats):
             (optimal_capacity * 100)
         ) / total_schools
     
-    # Score final
     if total_schools > 0:
         final_score = round(school_density_score * 0.3 + distance_score * 0.3 + capacity_score * 0.4)
     else:
@@ -192,87 +135,88 @@ def calculate_education_score(stats):
     return min(100, max(0, final_score))
 
 def calculate_commerce_score(stats):
-    """
-    Calcule le score pour la thématique Commerce
-    
-    Args:
-        stats (dict): Dictionnaire contenant les données statistiques
-        
-    Returns:
-        int: Score sur 100 points
-    """
-    # Récupération des données de commerce (combinaison de Shop et Food Store)
     shops_nbr = stats.get("Shop_nbr", 0)
-    # Correction: utiliser Shop_average_distance si disponible, sinon Shop_distance
-    shops_distance = stats.get("Shop_average_distance", stats.get("Shop_distance", 1000))
-    
+    shops_distance = stats.get("Shop_average_distance", stats.get("Shop_distance", 0))
     food_stores_nbr = stats.get("Food Store_nbr", 0)
-    food_stores_distance = stats.get("Food Store_average_distance", 500)
+    food_stores_distance = stats.get("Food Store_average_distance", 0)
     
-    # Ajustement en fonction du type de ville
-    city_type = stats.get("city_type", "")
-    if city_type == "Metropolis":
-        expected_shops = 150
-        max_shop_distance = 500
-    elif city_type == "Large_City":
-        expected_shops = 100
-        max_shop_distance = 800
-    elif city_type == "Mid-sized_City":
-        expected_shops = 50
-        max_shop_distance = 1500
-    elif city_type == "Little_City":
-        expected_shops = 25
-        max_shop_distance = 2500
-    else:  # Village
-        expected_shops = 10
-        max_shop_distance = 4000
+    # Calibré pour 98 commerces = 90 points
+    shops_density_score = min(100, shops_nbr * 1.1)  # ~90 commerces = 100%
     
-    # Calcul des scores
-    shops_density_score = min(100, (shops_nbr / expected_shops) * 100)  # Normalisé par type de ville
-    shops_distance_score = max(0, 100 - ((shops_distance / max_shop_distance) * 100))
+    if shops_distance > 0:
+        shops_distance_score = max(0, 100 - (shops_distance / 15))
+    else:
+        shops_distance_score = 60  # Valeur par défaut
     
-    # Importance des supermarchés (Food Store)
-    food_density_score = min(100, food_stores_nbr * 20)  # 5+ supermarchés = 100%
-    food_distance_score = max(0, 100 - ((food_stores_distance / 500) * 100))
+    # Score pour les supermarchés
+    food_density_score = min(100, food_stores_nbr * 25)  # 4 supermarchés = 100%
     
-    # Score final (pondéré)
+    if food_stores_distance > 0:
+        food_distance_score = max(0, 100 - (food_stores_distance / 10))
+    else:
+        food_distance_score = 70  # Valeur par défaut
+    
     final_score = round(
-        shops_density_score * 0.4 + 
-        shops_distance_score * 0.2 + 
+        shops_density_score * 0.5 + 
+        shops_distance_score * 0.3 + 
         food_density_score * 0.3 + 
-        food_distance_score * 0.1
+        food_distance_score * 0.3
     )
     return min(100, max(0, final_score))
 
 def calculate_health_score(stats):
-    """
-    Calcule le score pour la thématique Santé
+    # Séparation entre cliniques/docteurs et hôpitaux
+    healthcare_nbr = stats.get("Healthcare_nbr", 0)  # Cliniques et docteurs
+    healthcare_distance = stats.get("Healthcare_average_distance", 0)
     
-    Args:
-        stats (dict): Dictionnaire contenant les données statistiques
-        
-    Returns:
-        int: Score sur 100 points
-    """
-    health_nbr = stats.get("Healthcare_nbr", 0)
-    health_distance = stats.get("Healthcare_average_distance", 2000)
+    hospital_nbr = stats.get("Hospital_nbr", 0)  # Hôpitaux
+    hospital_distance = stats.get("Hospital_average_distance", 0)
+    
     city_type = stats.get("city_type", "")
     
-    # Ajustement selon type de ville
+    # Attentes par type de ville pour cliniques/docteurs
     if city_type == "Metropolis":
-        expected_health = 20
-        max_distance = 1000
+        expected_healthcare = 12
+        max_healthcare_distance = 800
+        expected_hospital = 3
+        max_hospital_distance = 2000
     elif city_type == "Large_City":
-        expected_health = 10
-        max_distance = 1500
+        expected_healthcare = 8
+        max_healthcare_distance = 1200
+        expected_hospital = 2
+        max_hospital_distance = 3000
+    elif city_type == "Mid-sized_City":
+        expected_healthcare = 4
+        max_healthcare_distance = 2000
+        expected_hospital = 1
+        max_hospital_distance = 5000
+    else:  # Petite ville ou village
+        expected_healthcare = 2
+        max_healthcare_distance = 3000
+        expected_hospital = 0.5  # 1 hôpital pour 2 petites villes en moyenne
+        max_hospital_distance = 10000
+    
+    # Score pour cliniques et docteurs (40% du total)
+    healthcare_density_score = min(100, (healthcare_nbr / expected_healthcare) * 100)
+    healthcare_distance_score = 50  # Valeur par défaut
+    if healthcare_distance > 0:
+        healthcare_distance_score = max(0, 100 - (healthcare_distance / (max_healthcare_distance/100)))
+    
+    healthcare_score = (healthcare_density_score * 0.6) + (healthcare_distance_score * 0.4)
+    
+    # Score pour hôpitaux (60% du total - plus importante)
+    hospital_density_score = min(100, (hospital_nbr / expected_hospital) * 100)
+    hospital_distance_score = 40  # Valeur par défaut
+    if hospital_distance > 0:
+        hospital_distance_score = max(0, 100 - (hospital_distance / (max_hospital_distance/100)))
+    
+    # Si pas d'hôpitaux attendus dans cette zone (ex: village)
+    if expected_hospital <= 0:
+        hospital_score = 50  # Score neutre
     else:
-        expected_health = 5
-        max_distance = 2500
+        hospital_score = (hospital_density_score * 0.5) + (hospital_distance_score * 0.3)
     
-    # Calcul des scores
-    health_density_score = min(100, (health_nbr / expected_health) * 100)
-    distance_score = max(0, 100 - ((health_distance / max_distance) * 100))
+    # Combinaison des scores avec pondération
+    final_score = round((healthcare_score * 0.4) + (hospital_score * 0.6))
     
-    # Score final
-    final_score = round(health_density_score * 0.6 + distance_score * 0.4)
     return min(100, max(0, final_score))

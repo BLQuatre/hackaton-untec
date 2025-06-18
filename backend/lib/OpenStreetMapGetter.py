@@ -128,13 +128,14 @@ def DataProvider(adresse, lat, lon) :
               "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 300),
-			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 1000),
+			("amenity", ["hospital"], "Hospital", 2000),
+			("amenity", ["clinic", "doctors"], "Healthcare", 1000),
 			("amenity", ["police", "fire_station"], "Public_Services", 2000),
 			("amenity", ["school"], "School", 500),
-			("highway", ["bus_stop"], "Transport", 1000),
-			("station", ["subway"], "Transport", 1000),
-			("railway", ["tram_stop"], "Transport", 1000),
-			("railway", ["station"], "Train_Station", 1000),
+			("highway", ["bus_stop"], "Transport", transport_radius),
+			("station", ["subway"], "Transport", transport_radius),
+			("railway", ["tram_stop"], "Transport", transport_radius),
+			("railway", ["station"], "Train_Station", transport_radius),
 		]
 	elif stats["city_type"] == "Large_City" :
 		shop_radius = 1000
@@ -146,13 +147,14 @@ def DataProvider(adresse, lat, lon) :
               "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 500),
-			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 2000),
+			("amenity", ["hospital"], "Hospital", 2000),
+			("amenity", ["clinic", "doctors"], "Healthcare", 2000),
 			("amenity", ["police", "fire_station"], "Public_Services", 3000),
-			("amenity", ["school"], "School", 1000),
-			("highway", ["bus_stop"], "Transport", 1000),
-			("station", ["subway"], "Transport", 1000),
-			("railway", ["tram_stop"], "Transport", 1000),
-			("railway", ["station"], "Train_Station", 1000),
+			("amenity", ["school"], "School", transport_radius),
+			("highway", ["bus_stop"], "Transport", transport_radius),
+			("station", ["subway"], "Transport", transport_radius),
+			("railway", ["tram_stop"], "Transport", transport_radius),
+			("railway", ["station"], "Train_Station", transport_radius),
 		]
 	elif stats["city_type"] == "Mid-sized_City" :
 		shop_radius = 2000
@@ -164,13 +166,14 @@ def DataProvider(adresse, lat, lon) :
               "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 0),
-			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 0),
+			("amenity", ["hospital"], "Hospital", 0),
+			("amenity", ["clinic", "doctors"], "Healthcare", 0),
 			("amenity", ["police", "fire_station"], "Public_Services", 5000),
 			("amenity", ["school"], "School", 0),
-			("highway", ["bus_stop"], "Transport", 1000),
-			("station", ["subway"], "Transport", 1000),
-			("railway", ["tram_stop"], "Transport", 1000),
-			("railway", ["station"], "Train_Station", 1000),
+			("highway", ["bus_stop"], "Transport", transport_radius),
+			("station", ["subway"], "Transport", transport_radius),
+			("railway", ["tram_stop"], "Transport", transport_radius),
+			("railway", ["station"], "Train_Station", transport_radius),
 		]
 	elif stats["city_type"] == "Little_City" :
 		shop_radius = 3000
@@ -182,13 +185,14 @@ def DataProvider(adresse, lat, lon) :
               "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 2000),
-			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 5000),
+			("amenity", ["hospital"], "Hospital", 5000),
+			("amenity", ["clinic", "doctors"], "Healthcare", 5000),
 			("amenity", ["police", "fire_station"], "Public_Services", 5000),
 			("amenity", ["school"], "School", 3000),
-			("highway", ["bus_stop"], "Transport", 1000),
-			("station", ["subway"], "Transport", 1000),
-			("railway", ["tram_stop"], "Transport", 1000),
-			("railway", ["station"], "Train_Station", 1000),
+			("highway", ["bus_stop"], "Transport", transport_radius),
+			("station", ["subway"], "Transport", transport_radius),
+			("railway", ["tram_stop"], "Transport", transport_radius),
+			("railway", ["station"], "Train_Station", transport_radius),
 		]
 	elif stats["city_type"] == "Village" :
 		shop_radius = 5000
@@ -200,13 +204,14 @@ def DataProvider(adresse, lat, lon) :
               "books", "gift", "hairdresser", "beauty", "optician",
               "sports", "toys"], "Shop", shop_radius),
 			("shop", ["supermarket"], "Food Store", 5000),
-			("amenity", ["hospital", "clinic", "doctors"], "Healthcare", 10000),
+			("amenity", ["hospital"], "Hospital", 10000),
+			("amenity", ["clinic", "doctors"], "Healthcare", 10000),
 			("amenity", ["police", "fire_station"], "Public_Services", 10000),
 			("amenity", ["school"], "School", 5000),
-			("highway", ["bus_stop"], "Transport", 1000),
-			("station", ["subway"], "Transport", 1000),
-			("railway", ["tram_stop"], "Transport", 1000),
-			("railway", ["station"], "Train_Station", 1000),
+			("highway", ["bus_stop"], "Transport", transport_radius),
+			("station", ["subway"], "Transport", transport_radius),
+			("railway", ["tram_stop"], "Transport", transport_radius),
+			("railway", ["station"], "Train_Station", transport_radius),
 		]
 	else :
 		exit(0)
@@ -290,9 +295,12 @@ def DataProvider(adresse, lat, lon) :
 	# 	f.write(formatted_output)
 	# pdf_filename = f"PDF_report.pdf"
 	# TxttoPDF.text_to_pdf(formatted_output, pdf_filename)
-	# scores = cost_scoring.calculate_cost_score(stats)
-	# for index, score in scores.items() :
-	# 	print(index, ":", score)
+
+	scores = cost_scoring.calculate_cost_score(stats)
+	for index, score in scores.items() :
+		print(index, ":", score)
+	print("\n")
+
 	return {
 		'stats': stats,
 		'formatted_output': formatted_output,
@@ -318,6 +326,7 @@ if __name__ == "__main__":
 	# adresse = "24ir9 fapfjal, 8ru2o"
 	adresse = "8 rue Riquet, 750000 Paris"
 	# adresse = "20 Quai Frissard, 76600 Le Havre"
+	# adresse = "97 rue au Coq, 27210 Beuzeville"
 	result = Costia_getData_with_adresse(adresse)
 	if isinstance(result, dict):
 		print(result['formatted_output'])
