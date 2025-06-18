@@ -4,6 +4,7 @@ import worker
 import school
 import utils
 import Score
+import mistral
 from io import StringIO
 # from . import TxttoPDF
 
@@ -306,6 +307,7 @@ def DataProvider(adresse, lat, lon) :
 	return {
 		'stats': stats,
 		'formatted_output': formatted_output,
+		'resume': mistral.getResume(formatted_output),
 		'filename': filename
 	}
 

@@ -16,6 +16,8 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { ChartComponent } from "@/components/ChartComponent"
 import { MapComponent } from "@/components/SimpleMapComponent"
 import { exportToPDF } from "@/lib/pdfExport"
+import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 
 interface Coords {
 	lat: number
@@ -84,7 +86,6 @@ interface EnhancedLocationData {
 	Score_Commerce?: string
 	"Score_Santé"?: string
 	Score_Global?: string
-
 	// School charge data
 	School_Charge?: {
 		Total_of_Elementary_School?: number
@@ -96,6 +97,9 @@ interface EnhancedLocationData {
 		Most_common_occurence?: string
 		[key: string]: any
 	}
+
+	// AI-generated resume/summary
+	resume?: string
 }
 
 interface AutocompleteSuggestion {
@@ -298,33 +302,35 @@ export default function HackathonApp() {
 		document.addEventListener("mousedown", handleClickOutside)
 		return () => document.removeEventListener("mousedown", handleClickOutside)
 	}, [])
-
 	const handleCoordsInputChange = (e: React.ChangeEvent<HTMLInputElement>, setFun: (value: React.SetStateAction<string>) => void) => {
 		setFun(e.target.value);
 		const lat = parseFloat(latInput);
 		const lon = parseFloat(lonInput);
 		setCoords(!isNaN(lat) && !isNaN(lon) ? { lat, lon } : null);
-	}	// Handle search
+	};
+
+	// Handle search
 	const handleSearch = async () => {
 		if (!coords && !address.trim()) return
 
 		setAppState("loading")
 		setError("")
 		setShowSuggestions(false)
-
 		try {
 			const response = await axios.post("http://localhost:8000/api/search/", {
 				coordinates: coords,
 				address: address.trim(),
 				city: address.trim().split(",")[1]?.trim()?.substring(5)?.trim() || undefined,
 			})
-			// The API returns { stats: {...}, formatted_output: "...", filename: "..." }
+			// The API returns { stats: {...}, formatted_output: "...", resume: "...", filename: "..." }
 			// We need the stats object which contains the enhanced location data
-			console.log("API response:")
-			console.log(response.data)
-			console.log("-----------")
 			if (response.data.stats && typeof response.data.stats === 'object') {
-				setLocationData(response.data.stats)
+				const locationDataWithResume = { ...response.data.stats }
+				// Add the resume if it exists
+				if (response.data.resume) {
+					locationDataWithResume.resume = response.data.resume
+				}
+				setLocationData(locationDataWithResume)
 			} else if (typeof response.data === 'object' && response.data.nom_ville) {
 				// Fallback if the API returns data directly
 				setLocationData(response.data)
@@ -335,11 +341,10 @@ export default function HackathonApp() {
 				setAppState("search");
 				return;
 			}
-			setAppState("results")
-		} catch (err: any) {
+			setAppState("results")		} catch (err: any) {
 			// For development, if backend is not available, use mock data
 			if (err.code === 'ECONNREFUSED' || err.response?.status === 404) {
-				console.log("Backend not available, using mock data for testing")
+				console.log("Backend not available, using mock data for testing");
 				const mockData: EnhancedLocationData = {
 					nom_ville: "Paris",
 					type_commune: "Commune",
@@ -367,8 +372,31 @@ export default function HackathonApp() {
 					School_nbr: 35,
 					School_average_distance: 300,
 					Transport_nbr: 85,
-					Transport_average_distance: 150
-				}
+					Transport_average_distance: 150,
+					resume: `# Paris Overview
+
+Paris is a **major metropolitan area** with excellent connectivity and abundant amenities.
+
+## Transportation 🚌
+- Outstanding public transportation with **85 nearby options**
+- Average distance: *150m*
+
+## Shopping & Services 🛍️
+- Highly accessible with **125 shops** within 250m on average
+- Wide variety of retail options available
+
+## Healthcare 🏥
+- Well-distributed healthcare facilities
+- **25 locations** averaging 400m away
+
+## Employment Market 💼
+The employment situation shows:
+- **150,000** unemployed residents *(7% of population)*
+- **45,000** job offers available in the department
+- Indicates *active job market dynamics*
+
+> This data represents a comprehensive analysis of urban amenities and services availability.`
+				};
 				setLocationData(mockData)
 				setAppState("results")
 				return
@@ -730,7 +758,28 @@ export default function HackathonApp() {
 												{locationData.departement}
 											</p>
 										)}
-									</div>
+									</div>									{/* AI Resume Section */}
+									{locationData.resume && (
+										<div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-6 hover:scale-[1.01] transition-all border border-purple-200 dark:border-purple-800">
+											<h4 className="text-xl font-semibold text-purple-900 dark:text-purple-100 mb-4 flex items-center gap-2">
+												<span>🤖</span>
+												AI Summary
+											</h4>
+											<div className="prose prose-purple dark:prose-invert prose-sm sm:prose-base max-w-none prose-headings:text-purple-900 dark:prose-headings:text-purple-100 prose-p:text-purple-800 dark:prose-p:text-purple-200 prose-strong:text-purple-900 dark:prose-strong:text-purple-100 prose-em:text-purple-700 dark:prose-em:text-purple-300">
+												<ReactMarkdown
+													remarkPlugins={[remarkGfm]}
+													components={{
+														// Override default styling for better integration
+														blockquote: ({children}) => <blockquote className="border-l-4 border-purple-300 dark:border-purple-600 pl-4 italic bg-purple-50/50 dark:bg-purple-900/10 py-2 my-4 not-prose">{children}</blockquote>,
+														code: ({children}) => <code className="bg-purple-100 dark:bg-purple-800/30 px-1.5 py-0.5 rounded text-sm font-mono text-purple-900 dark:text-purple-100 not-prose">{children}</code>,
+														pre: ({children}) => <pre className="bg-purple-100 dark:bg-purple-800/30 p-4 rounded-lg overflow-x-auto text-sm font-mono text-purple-900 dark:text-purple-100 not-prose">{children}</pre>,
+													}}
+												>
+													{locationData.resume}
+												</ReactMarkdown>
+											</div>
+										</div>
+									)}
 
 									{/* Responsive Grid for Basic Info */}
 									<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -794,7 +843,8 @@ export default function HackathonApp() {
 												)}
 											</div>
 										</div>
-									</div>									{/* Enhanced Employment Data */}
+									</div>
+									{/* Enhanced Employment Data */}
 									{(locationData.Unemployed_people || locationData.Job_Offer_in_Departement) && (
 										<div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg p-4 sm:p-6 hover:scale-[1.01] transition-all">
 											<h4 className="text-xl font-semibold text-yellow-900 dark:text-yellow-100 mb-4">
@@ -1252,7 +1302,8 @@ export default function HackathonApp() {
 														</div>
 													)}
 												</CardContent>
-											</Card>										)}
+											</Card>
+										)}
 									</CardContent>
 								</Card>
 							)}
