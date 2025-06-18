@@ -284,7 +284,7 @@ def DataProvider(adresse, lat, lon) :
 	elif stats["city_type"] == "Mid-sized_City" :
 		stats["School_Charge"] = school.school_charge_city(city)
 	elif stats["city_type"] == "Little_City":
-		stats["School_Charge"] = school.school_charge_radius(city)
+		stats["School_Charge"] = school.school_charge_radius(lat, lon, 1500)
 		if stats["School_Charge"] == None :
 			stats["School_Charge"] = school.school_charge_radius(lat, lon, 3000)
 	elif stats["city_type"] == "Village" :
