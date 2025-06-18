@@ -13,7 +13,7 @@ def normalize(text):
     text = unicodedata.normalize('NFKD', text).encode('ASCII', 'ignore').decode('utf-8')
     return text
 
-def get_schools_density_by_radius(lat, lon, radius, csv_path="./data/raw/School.csv"):
+def get_schools_density_by_radius(lat, lon, radius, csv_path="../data/raw/School.csv"):
     try:
         df = pd.read_csv(csv_path, sep=";", encoding="utf-8")
 
@@ -63,7 +63,7 @@ def get_schools_density_by_radius(lat, lon, radius, csv_path="./data/raw/School.
         traceback.print_exc()
         return None
 
-def get_school_density(nom_ville, csv_path="./data/raw/School.csv"):
+def get_school_density(nom_ville, csv_path="../data/raw/School.csv"):
     try:
         nom_ville_norm = normalize(nom_ville)
         df = pd.read_csv(csv_path, sep=";", encoding="utf-8")
