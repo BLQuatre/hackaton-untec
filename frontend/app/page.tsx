@@ -426,7 +426,8 @@ export default function HackathonApp() {
 						</div>
 
 						{/* Controls Section */}
-						<div className="flex items-center space-x-3">							<Button
+						<div className="flex items-center space-x-3">
+							<Button
 								variant="outline"
 								size="sm"
 								onClick={toggleDarkMode}
@@ -624,13 +625,12 @@ export default function HackathonApp() {
 								Analyse des données en cours
 							</p>
 						</div>
-
 						{/* Enhanced bouncing dots with gradient colors */}
 						<div className="flex space-x-2 animate-in slide-in-from-bottom-2 duration-300 delay-500">
-							<div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0s" }}></div>
-							<div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.1s" }}></div>
-							<div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.2s" }}></div>
-							<div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.3s" }}></div>
+							<div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-600 dark:from-blue-400 dark:to-blue-300 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0s" }}></div>
+							<div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-purple-600 dark:from-purple-400 dark:to-purple-300 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.1s" }}></div>
+							<div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-indigo-600 dark:from-indigo-400 dark:to-indigo-300 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.2s" }}></div>
+							<div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 dark:from-blue-400 dark:to-purple-400 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.3s" }}></div>
 						</div>
 					</div>
 				)}
