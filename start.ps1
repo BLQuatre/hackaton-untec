@@ -4,7 +4,6 @@
 docker compose down
 
 # Build and start containers in detached mode
-$env:COMPOSE_BAKE = "true"
 docker compose up --build -d
 
 # Display container status
