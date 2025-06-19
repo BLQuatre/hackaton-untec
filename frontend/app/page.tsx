@@ -111,7 +111,7 @@ type SearchMethod = "address" | "coordinates"
 
 export default function HackathonApp() {
 	// App state management
-	const [appState, setAppState] = useState<AppState>("loading")
+	const [appState, setAppState] = useState<AppState>("search")
 	const [darkMode, setDarkMode] = useState(false)
 	const [searchMethod, setSearchMethod] = useState<SearchMethod>("address")
 
@@ -226,7 +226,7 @@ export default function HackathonApp() {
 			setSuggestions(suggestions)
 			setShowSuggestions(true)
 		} catch (error) {
-			console.error('Error fetching suggestions:', error)
+			console.error('Erreur lors de la récupération des suggestions:', error)
 			setSuggestions([])
 			setShowSuggestions(false)
 		}
@@ -333,11 +333,12 @@ export default function HackathonApp() {
 				setAppState("search");
 				return;
 			}
-			setAppState("results")		} catch (err: any) {
+			setAppState("results")
+		} catch (err: any) {
 			if (err.response?.data?.error) {
 				setError(err.response.data.error)
 			} else {
-				setError("Failed to fetch location data")
+				setError("Échec de la récupération des données de localisation")
 			}
 			setAppState("search")
 			console.error(err)
@@ -368,10 +369,9 @@ export default function HackathonApp() {
 		if (!locationData) return;
 
 		try {
-			await exportToPDF(locationData, 'results-content');
-		} catch (error) {
-			console.error('Error exporting PDF:', error);
-			alert('Error generating PDF. Please try again.');
+			await exportToPDF(locationData, 'results-content');		} catch (error) {
+			console.error('Erreur lors de l\'export PDF:', error);
+			alert('Erreur lors de la génération du PDF. Veuillez réessayer.');
 		}
 	};
 
@@ -640,7 +640,7 @@ export default function HackathonApp() {
 					<div className="space-y-6 animate-in fade-in-0 duration-300">
 						<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-300">
 							<h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white animate-in slide-in-from-left-6 duration-300">
-								Location Results
+								Résultats de la recherche
 							</h2>
 							<div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 								<Button
@@ -649,7 +649,7 @@ export default function HackathonApp() {
 									className="flex items-center justify-center space-x-2 transition-all hover:scale-105 hover:shadow-md cursor-pointer dark:text-white"
 								>
 									<Download className="h-4 w-4" />
-									<span>Export PDF</span>
+									<span>Exporter en PDF</span>
 								</Button>
 								<Button
 									variant="outline"
@@ -681,7 +681,7 @@ export default function HackathonApp() {
 											{locationData.latitude && locationData.longitude && (
 												<div className="text-right">
 													<div className="bg-white/70 dark:bg-gray-800/70 rounded-lg p-4">
-														<p className="text-sm text-gray-600 dark:text-gray-400">Coordinates</p>
+														<p className="text-sm text-gray-600 dark:text-gray-400">Coordonnées</p>
 														<p className="font-mono text-blue-800 dark:text-blue-200">{locationData.latitude.toFixed(6)}</p>
 														<p className="font-mono text-blue-800 dark:text-blue-200">{locationData.longitude.toFixed(6)}</p>
 													</div>
@@ -690,7 +690,8 @@ export default function HackathonApp() {
 										</div>
 									</div>
 								</CardContent>
-							</Card>							{/* Tabs for Stats and Resume */}
+							</Card>
+							{/* Tabs for Stats and Resume */}
 							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl">
 								<CardContent className="p-6">
 									<Tabs defaultValue="stats" className="transition-all duration-300">
@@ -700,14 +701,14 @@ export default function HackathonApp() {
 												className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
 											>
 												<BarChart3 className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-												<span>Statistics</span>
+												<span>Statistiques</span>
 											</TabsTrigger>
 											<TabsTrigger
 												value="resume"
 												className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
 											>
 												<Brain className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-												<span>AI Analysis</span>
+												<span>Analyse IA</span>
 											</TabsTrigger>
 										</TabsList>
 
@@ -737,11 +738,11 @@ export default function HackathonApp() {
 									<CardContent className="p-6">
 										<div className="flex items-center justify-between">
 											<div>
-												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Density</p>
+												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Densité</p>
 												<p className="text-2xl font-bold text-gray-900 dark:text-white">
 													{locationData.densite ? locationData.densite.toLocaleString() : 'N/A'}
 												</p>
-												<p className="text-xs text-gray-500">per km²</p>
+												<p className="text-xs text-gray-500">par km²</p>
 											</div>
 											<div className="h-12 w-12 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
 												<span className="text-green-600 dark:text-green-400 text-xl">🏙️</span>
@@ -754,7 +755,7 @@ export default function HackathonApp() {
 									<CardContent className="p-6">
 										<div className="flex items-center justify-between">
 											<div>
-												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Surface Area</p>
+												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Surface</p>
 												<p className="text-2xl font-bold text-gray-900 dark:text-white">
 													{locationData.superficie_km2 || 'N/A'}
 												</p>
@@ -771,7 +772,7 @@ export default function HackathonApp() {
 									<CardContent className="p-6">
 										<div className="flex items-center justify-between">
 											<div>
-												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Global Score</p>
+												<p className="text-sm font-medium text-gray-600 dark:text-gray-400">Score Global</p>
 												<p className="text-3xl font-bold text-green-600 dark:text-green-400">
 													{locationData.Score_Global ? locationData.Score_Global.split('/')[0] : 'N/A'}
 												</p>
@@ -790,11 +791,8 @@ export default function HackathonApp() {
 								<CardHeader>
 									<CardTitle className="text-2xl dark:text-white flex items-center gap-2">
 										<BarChart3 className="h-6 w-6" />
-										Quality of Life Scores
+										Scores par catégorie
 									</CardTitle>
-									<CardDescription className="dark:text-gray-300">
-										Comprehensive evaluation across different categories
-									</CardDescription>
 								</CardHeader>
 								<CardContent>
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -837,55 +835,54 @@ export default function HackathonApp() {
 								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
 									<CardHeader>
 										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
-											💼 Employment Overview
+											💼 Aperçu de l'emploi
 										</CardTitle>
 									</CardHeader>
 									<CardContent className="space-y-4">
 										<div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
 											<div className="flex items-center justify-between mb-2">
-												<span className="text-red-700 dark:text-red-300 font-medium">Unemployed People</span>
-												<span className="text-2xl font-bold text-red-800 dark:text-red-200">
-													{locationData.Unemployed_people ? locationData.Unemployed_people.toLocaleString() : 'N/A'}
-												</span>
+												<span className="text-red-700 dark:text-red-300 font-medium">Personnes au chômage</span>
+													<span className="text-2xl font-bold text-red-800 dark:text-red-200">
+														{locationData.Unemployed_people ? locationData.Unemployed_people.toLocaleString() : 'N/A'}
+													</span>
+												</div>
+												<div className="text-sm text-red-600 dark:text-red-400">
+													{locationData["Proportion of unemployed"] || 'N/A'} de la population
+												</div>
 											</div>
-											<div className="text-sm text-red-600 dark:text-red-400">
-												{locationData["Proportion of unemployed"] || 'N/A'} of population
+											<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
+												<div className="flex items-center justify-between mb-2">
+													<span className="text-green-700 dark:text-green-300 font-medium">Offres d'emploi disponibles</span>
+													<span className="text-2xl font-bold text-green-800 dark:text-green-200">
+														{locationData.Job_Offer_in_Departement ? locationData.Job_Offer_in_Departement.toLocaleString() : 'N/A'}
+													</span>
+												</div>
+												<div className="text-sm text-green-600 dark:text-green-400">Dans le département</div>
 											</div>
-										</div>
-										<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4">
-											<div className="flex items-center justify-between mb-2">
-												<span className="text-green-700 dark:text-green-300 font-medium">Job Offers Available</span>
-												<span className="text-2xl font-bold text-green-800 dark:text-green-200">
-													{locationData.Job_Offer_in_Departement ? locationData.Job_Offer_in_Departement.toLocaleString() : 'N/A'}
-												</span>
-											</div>
-											<div className="text-sm text-green-600 dark:text-green-400">In the department</div>
-										</div>
 										{locationData.Unemployed_people && locationData.Job_Offer_in_Departement && (
 											<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
 												<div className="text-center">
 													<div className="text-3xl font-bold text-blue-800 dark:text-blue-200">
 														{(locationData.Unemployed_people / locationData.Job_Offer_in_Departement).toFixed(1)}
 													</div>
-													<div className="text-sm text-blue-600 dark:text-blue-400">Unemployed per job offer</div>
+													<div className="text-sm text-blue-600 dark:text-blue-400">Chômeurs par offre d'emploi</div>
 												</div>
 											</div>
 										)}
 									</CardContent>
 								</Card>
-
 								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
 									<CardHeader>
 										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
-											🎓 Education Statistics
+											🎓 Statistiques de l'éducation
 										</CardTitle>
 									</CardHeader>
 									<CardContent className="space-y-4">
 										{locationData.School_Charge && (
 											<>
-												<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
+											<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
 													<div className="flex items-center justify-between mb-2">
-														<span className="text-blue-700 dark:text-blue-300 font-medium">Elementary Schools</span>
+														<span className="text-blue-700 dark:text-blue-300 font-medium">Écoles Primaires</span>
 														<span className="text-2xl font-bold text-blue-800 dark:text-blue-200">
 															{locationData.School_Charge.Total_of_Elementary_School || 'N/A'}
 														</span>
@@ -897,14 +894,14 @@ export default function HackathonApp() {
 															<div key={index} className="flex justify-between text-sm">
 																<span className="text-gray-600 dark:text-gray-400">{status}</span>
 																<span className={`font-medium ${
-																	status === 'Under Capacity' ? 'text-green-600 dark:text-green-400' :
-																	status === 'Optimal' ? 'text-blue-600 dark:text-blue-400' :
-																	'text-yellow-600 dark:text-yellow-400'
-																}`}>
-																	{count} {status === locationData.School_Charge?.Most_common_status &&
-																		locationData.School_Charge?.Most_common_occurence &&
-																		`(${locationData.School_Charge.Most_common_occurence})`}
-																</span>
+															status === 'Under Capacity' ? 'text-green-600 dark:text-green-400' :
+															status === 'Optimal' ? 'text-blue-600 dark:text-blue-400' :
+															'text-yellow-600 dark:text-yellow-400'
+														}`}>
+															{count} {status === locationData.School_Charge?.Most_common_status &&
+																locationData.School_Charge?.Most_common_occurence &&
+																`(${locationData.School_Charge.Most_common_occurence})`}
+														</span>
 															</div>
 														))}
 													</div>
@@ -912,7 +909,9 @@ export default function HackathonApp() {
 												{locationData.School_Charge.Most_common_status && (
 													<div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-3 text-center">
 														<div className="text-sm text-green-700 dark:text-green-300">
-															Most schools are {locationData.School_Charge.Most_common_status.toLowerCase()}
+															La plupart des écoles sont {locationData.School_Charge.Most_common_status?.toLowerCase() === 'under capacity' ? 'sous-capacité' :
+															locationData.School_Charge.Most_common_status?.toLowerCase() === 'optimal' ? 'optimales' :
+															locationData.School_Charge.Most_common_status?.toLowerCase()}
 														</div>
 													</div>
 												)}
@@ -927,30 +926,30 @@ export default function HackathonApp() {
 								<CardHeader>
 									<CardTitle className="text-2xl dark:text-white flex items-center gap-2">
 										<Map className="h-6 w-6" />
-										Local Amenities
+										Commodités locales
 									</CardTitle>
 									<CardDescription className="dark:text-gray-300">
-										Services and facilities within walking distance
+										Services et équipements accessibles à pied
 									</CardDescription>
 								</CardHeader>
 								<CardContent>
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 										{[
-											{ type: 'Shops', countKey: 'Shop_nbr', distanceKey: 'Shop_average_distance', radiusKey: 'Shop_radius', icon: '🛍️',
+											{ type: 'Magasins', countKey: 'Shop_nbr', distanceKey: 'Shop_average_distance', radiusKey: 'Shop_radius', icon: '🛍️',
 											  bgClass: 'bg-blue-50 dark:bg-blue-900/20', borderClass: 'border-blue-200 dark:border-blue-800', textClass: 'text-blue-600 dark:text-blue-400' },
-											{ type: 'Food Stores', countKey: 'Food Store_nbr', distanceKey: 'Food Store_average_distance', radiusKey: 'Food Store_radius', icon: '🥖',
+											{ type: 'Alimentation', countKey: 'Food Store_nbr', distanceKey: 'Food Store_average_distance', radiusKey: 'Food Store_radius', icon: '🥖',
 											  bgClass: 'bg-green-50 dark:bg-green-900/20', borderClass: 'border-green-200 dark:border-green-800', textClass: 'text-green-600 dark:text-green-400' },
-											{ type: 'Hospitals', countKey: 'Hospital_nbr', distanceKey: 'Hospital_average_distance', radiusKey: 'Hospital_radius', icon: '🏥',
+											{ type: 'Hôpitaux', countKey: 'Hospital_nbr', distanceKey: 'Hospital_average_distance', radiusKey: 'Hospital_radius', icon: '🏥',
 											  bgClass: 'bg-red-50 dark:bg-red-900/20', borderClass: 'border-red-200 dark:border-red-800', textClass: 'text-red-600 dark:text-red-400' },
-											{ type: 'Healthcare', countKey: 'Healthcare_nbr', distanceKey: 'Healthcare_average_distance', radiusKey: 'Healthcare_radius', icon: '⚕️',
+											{ type: 'Santé', countKey: 'Healthcare_nbr', distanceKey: 'Healthcare_average_distance', radiusKey: 'Healthcare_radius', icon: '⚕️',
 											  bgClass: 'bg-pink-50 dark:bg-pink-900/20', borderClass: 'border-pink-200 dark:border-pink-800', textClass: 'text-pink-600 dark:text-pink-400' },
-											{ type: 'Public Services', countKey: 'Public_Services_nbr', distanceKey: 'Public_Services_average_distance', radiusKey: 'Public_Services_radius', icon: '🏛️',
+											{ type: 'Services Publics', countKey: 'Public_Services_nbr', distanceKey: 'Public_Services_average_distance', radiusKey: 'Public_Services_radius', icon: '🏛️',
 											  bgClass: 'bg-purple-50 dark:bg-purple-900/20', borderClass: 'border-purple-200 dark:border-purple-800', textClass: 'text-purple-600 dark:text-purple-400' },
-											{ type: 'Schools', countKey: 'School_nbr', distanceKey: 'School_average_distance', radiusKey: 'School_radius', icon: '🎓',
+											{ type: 'Écoles', countKey: 'School_nbr', distanceKey: 'School_average_distance', radiusKey: 'School_radius', icon: '🎓',
 											  bgClass: 'bg-yellow-50 dark:bg-yellow-900/20', borderClass: 'border-yellow-200 dark:border-yellow-800', textClass: 'text-yellow-600 dark:text-yellow-400' },
-											{ type: 'Transport', countKey: 'Transport_nbr', distanceKey: 'Transport_average_distance', radiusKey: 'Transport_radius', icon: '🚌',
+											{ type: 'Transports', countKey: 'Transport_nbr', distanceKey: 'Transport_average_distance', radiusKey: 'Transport_radius', icon: '🚌',
 											  bgClass: 'bg-indigo-50 dark:bg-indigo-900/20', borderClass: 'border-indigo-200 dark:border-indigo-800', textClass: 'text-indigo-600 dark:text-indigo-400' },
-											{ type: 'Train Stations', countKey: 'Train_Station_nbr', distanceKey: 'Train_Station_average_distance', radiusKey: 'Train_Station_radius', icon: '🚂',
+											{ type: 'Gares', countKey: 'Train_Station_nbr', distanceKey: 'Train_Station_average_distance', radiusKey: 'Train_Station_radius', icon: '🚂',
 											  bgClass: 'bg-gray-50 dark:bg-gray-900/20', borderClass: 'border-gray-200 dark:border-gray-800', textClass: 'text-gray-600 dark:text-gray-400' }
 										].map((amenity, index) => {
 											const count = locationData[amenity.countKey as keyof EnhancedLocationData] as number;
@@ -967,12 +966,12 @@ export default function HackathonApp() {
 														</div>
 														{distance && (
 															<div className="text-xs text-gray-600 dark:text-gray-400">
-																Avg. {Math.round(distance)}m away
+																Moy. {Math.round(distance)}m
 															</div>
 														)}
 														{radius && (
 															<div className="text-xs text-gray-500 dark:text-gray-500">
-																Within {radius}m radius
+																Dans un rayon de {radius}m
 															</div>
 														)}
 													</div>
@@ -984,18 +983,18 @@ export default function HackathonApp() {
 							</Card>
 
 							{/* Map and Charts */}
-							<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+							<div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
 								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
 									<CardHeader>
 										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
 											<MapPin className="h-5 w-5" />
-											Location Map
+											Carte de localisation
 										</CardTitle>
 									</CardHeader>
 									<CardContent>
 										<div className="space-y-4">
 											<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
-												<h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Address</h4>
+												<h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Adresse</h4>
 												<p className="text-blue-800 dark:text-blue-200">
 													{locationData.nom_ville}, {locationData.code_postal}
 												</p>
@@ -1021,60 +1020,15 @@ export default function HackathonApp() {
 														className="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors duration-200"
 													>
 														<MapPin className="h-4 w-4 mr-2" />
-														View on OpenStreetMap
+														Voir sur OpenStreetMap
 													</a>
 												</div>
 											)}
 										</div>
 									</CardContent>
 								</Card>
-
-								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
-									<CardHeader>
-										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
-											<BarChart3 className="h-5 w-5" />
-											Score Breakdown
-										</CardTitle>
-									</CardHeader>
-									<CardContent>
-										<div className="h-64 flex items-center justify-center">
-											<div className="relative w-48 h-48">
-												{(() => {
-													const globalScore = locationData.Score_Global ? parseInt(locationData.Score_Global.split('/')[0]) : 0;
-													return (
-														<>
-															<svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
-																<path
-																	d="m18,2.0845 a 15.9155,15.9155 0 0,1 0,31.831 a 15.9155,15.9155 0 0,1 0,-31.831"
-																	fill="none"
-																	stroke="#e5e7eb"
-																	strokeWidth="2"
-																	className="dark:stroke-gray-600"
-																/>
-																<path
-																	d="m18,2.0845 a 15.9155,15.9155 0 0,1 0,31.831 a 15.9155,15.9155 0 0,1 0,-31.831"
-																	fill="none"
-																	stroke="#10b981"
-																	strokeWidth="2"
-																	strokeDasharray={`${globalScore}, 100`}
-																	strokeLinecap="round"
-																/>
-															</svg>
-															<div className="absolute inset-0 flex items-center justify-center">
-																<div className="text-center">
-																	<div className="text-3xl font-bold text-green-600 dark:text-green-400">{globalScore}</div>
-																	<div className="text-sm text-gray-600 dark:text-gray-400">Global Score</div>
-																</div>
-															</div>
-														</>
-													);
-												})()}
-											</div>
-										</div>
-										</CardContent>
-								</Card>
 							</div>
-										</TabsContent>
+						</TabsContent>
 
 										<TabsContent value="resume" className="space-y-6 mt-6 animate-in slide-in-from-right-4 duration-300">
 											{/* AI Resume Section */}
@@ -1098,8 +1052,8 @@ export default function HackathonApp() {
 													<div className="text-gray-400 dark:text-gray-600 mb-4">
 														<Brain className="h-16 w-16 mx-auto" />
 													</div>
-													<h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No AI Analysis Available</h3>
-													<p className="text-gray-500 dark:text-gray-500">The AI analysis will appear here when available.</p>
+													<h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">Aucune analyse IA disponible</h3>
+													<p className="text-gray-500 dark:text-gray-500">L'analyse IA apparaîtra ici lorsqu'elle sera disponible.</p>
 												</div>
 											)}
 										</TabsContent>
