@@ -4,3 +4,5 @@ django-cors-headers==4.7.0
 python-dotenv==1.1.0
 pandas==2.2.2
 requests==2.32.3
+mistralai==1.8.2
+
