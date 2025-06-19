@@ -1080,6 +1080,100 @@ export default function HackathonDemoApp() {
 								</CardContent>
 							</Card>
 
+							{/* Construction Resources Section */}
+							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+								<CardHeader>
+									<CardTitle className="text-2xl dark:text-white flex items-center gap-2">
+										<span className="text-2xl">🏗️</span>
+										Ressources de construction
+									</CardTitle>
+									<CardDescription className="dark:text-gray-300">
+										Fournisseurs et services pour vos projets de construction
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									{(() => {
+										// Mock construction resources data - distances around 250km
+										const constructionResources = [
+											{
+												name: 'Magasins de bricolage',
+												distance: 235000 + Math.random() * 30000, // 235-265km
+												supplier: 'Leroy Merlin Lyon',
+												icon: '🔨',
+												category: 'Matériaux',
+												description: 'Outillage et matériaux de construction'
+											},
+											{
+												name: 'Négociants en matériaux',
+												distance: 220000 + Math.random() * 60000, // 220-280km
+												supplier: 'Matériaux Rhône SA',
+												icon: '🧱',
+												category: 'Matériaux',
+												description: 'Gros œuvre, ciment, parpaings'
+											},
+											{
+												name: 'Menuiseries',
+												distance: 245000 + Math.random() * 20000, // 245-265km
+												supplier: 'Menuiserie Moderne',
+												icon: '🪟',
+												category: 'Spécialisé',
+												description: 'Fenêtres, portes, volets'
+											},
+											{
+												name: 'Électricité & Plomberie',
+												distance: 230000 + Math.random() * 40000, // 230-270km
+												supplier: 'Électro-Sanitaire Pro',
+												icon: '⚡',
+												category: 'Spécialisé',
+												description: 'Matériel électrique et sanitaire'
+											},
+											{
+												name: 'Peinture & Décoration',
+												distance: 255000 + Math.random() * 20000, // 255-275km
+												supplier: 'Déco Couleurs',
+												icon: '🎨',
+												category: 'Finition',
+												description: 'Peintures, papiers peints, sols'
+											},
+											{
+												name: 'Location de matériel',
+												distance: 240000 + Math.random() * 30000, // 240-270km
+												supplier: 'LocaBTP Services',
+												icon: '🚛',
+												category: 'Services',
+												description: 'Outils, échafaudages, engins'
+											}
+										];// Sort by distance
+										const sortedResources = constructionResources.sort((a, b) => a.distance - b.distance);
+
+										return (
+											<div className="space-y-6">
+												{/* Resource Cards Grid */}
+												<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+													{constructionResources.map((resource, index) => {
+														const distanceKm = resource.distance / 1000;
+
+														return (
+															<div key={index} className="bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800 rounded-lg p-4 border transition-all hover:scale-105">																<div className="text-center space-y-2">
+																	<div className="text-3xl">{resource.icon}</div>
+																	<div className="font-semibold text-gray-900 dark:text-white">{resource.name}</div>
+																	<div className="text-xl font-bold text-blue-600 dark:text-blue-400">
+																		{distanceKm.toFixed(0)}km
+																	</div>
+																	<div className="text-xs text-gray-500 dark:text-gray-500 bg-white/50 dark:bg-gray-800/50 rounded px-2 py-1">
+																		{resource.description}
+																	</div>
+																</div>
+															</div>
+														);
+													})}
+												</div>
+											</div>
+										);
+									})()}
+								</CardContent>
+							</Card>
+
 							{/* Map and Charts */}
 							<div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
 								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
