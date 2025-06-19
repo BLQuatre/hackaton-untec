@@ -11,10 +11,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { MapPin, Moon, Sun, Search, ArrowLeft, Loader2, Download, BarChart3, Map, Brain } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { LanguageSwitcher } from "@/components/LanguageSwitcher"
-import { useLanguage } from "@/contexts/LanguageContext"
-import { ChartComponent } from "@/components/ChartComponent"
-import { MapComponent } from "@/components/SimpleMapComponent"
 import { exportToPDF } from "@/lib/pdfExport"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
@@ -114,8 +110,6 @@ type AppState = "search" | "loading" | "results"
 type SearchMethod = "address" | "coordinates"
 
 export default function HackathonApp() {
-	const { t } = useLanguage()
-
 	// App state management
 	const [appState, setAppState] = useState<AppState>("search")
 	const [darkMode, setDarkMode] = useState(false)
@@ -423,20 +417,16 @@ export default function HackathonApp() {
 							</div>
 							<div className="space-y-0.5">
 								<h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 dark:from-white dark:via-blue-200 dark:to-purple-200 bg-clip-text text-transparent transition-all duration-300 group-hover:scale-105">
-									{t('app.title')}
+									Costia
 								</h1>
 								<p className="text-xs text-gray-600 dark:text-gray-400 font-medium opacity-80 group-hover:opacity-100 transition-all duration-300">
-									{t('app.description')}
+									42 Le Havre X UNTEC
 								</p>
 							</div>
 						</div>
 
 						{/* Controls Section */}
 						<div className="flex items-center space-x-3">
-							<div>
-								<LanguageSwitcher />
-							</div>
-
 							<Button
 								variant="outline"
 								size="sm"
@@ -463,18 +453,18 @@ export default function HackathonApp() {
 					<div className="space-y-8 animate-in fade-in-0 duration-300">
 						<div className="text-center animate-in slide-in-from-bottom-4 duration-300">
 							<h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-								{t('search.title')}
+								Rechercher un emplacement
 							</h2>
 							<p className="text-lg text-gray-600 dark:text-gray-300">
-								{t('search.description')}
+								Trouver des informations détaillées sur une ville, un quartier ou un lieu spécifique
 							</p>
 						</div>
 
 						<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl">
 							<CardHeader>
-								<CardTitle className="dark:text-white">Search Methods</CardTitle>
+								<CardTitle className="dark:text-white">Nos méthodes de recherche</CardTitle>
 								<CardDescription className="dark:text-gray-300">
-									Select how you'd like to search for locations
+									Choisissez comment vous souhaitez rechercher votre emplacement
 								</CardDescription>
 							</CardHeader>
 							<CardContent>
@@ -489,14 +479,14 @@ export default function HackathonApp() {
 											className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
 										>
 											<Search className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-											<span>{t('search.methods.address')}</span>
+											<span>Adresse</span>
 										</TabsTrigger>
 										<TabsTrigger
 											value="coordinates"
 											className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
 										>
 											<MapPin className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
-											<span>{t('search.methods.coordinates')}</span>
+											<span>Coordonnées</span>
 										</TabsTrigger>
 									</TabsList>
 
@@ -505,7 +495,7 @@ export default function HackathonApp() {
 											<Input
 												ref={inputRef}
 												type="text"
-												placeholder={t('search.placeholder')}
+												placeholder="Rechercher une adresse, une ville ou un lieu..."
 												value={address}
 												onChange={handleInputChange}
 												onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
@@ -552,12 +542,6 @@ export default function HackathonApp() {
 												</div>
 											)}
 										</div>
-
-										<div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-											<p>
-												💡 <strong>Smart suggestions:</strong> Type partial names for instant results
-											</p>
-										</div>
 									</TabsContent>
 
 									<TabsContent value="coordinates" className="space-y-4 mt-6 animate-in slide-in-from-right-4 duration-300">
@@ -569,7 +553,7 @@ export default function HackathonApp() {
 												<Input
 													id="latitude"
 													type="text"
-													placeholder="e.g. 49.4944"
+													placeholder="49.4944"
 													value={latInput}
 													onChange={(e) => handleCoordsInputChange(e, setLatInput)}
 													className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white text-lg py-6 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg hover:shadow-md"
@@ -582,18 +566,12 @@ export default function HackathonApp() {
 												<Input
 													id="longitude"
 													type="text"
-													placeholder="e.g. 0.1079"
+													placeholder="0.1079"
 													value={lonInput}
 													onChange={(e) => handleCoordsInputChange(e, setLonInput)}
 													className="w-full dark:bg-gray-700 dark:border-gray-600 dark:text-white text-lg py-6 transition-all duration-300 focus:scale-[1.02] focus:shadow-lg hover:shadow-md"
 												/>
 											</div>
-										</div>
-
-										<div className="text-sm text-gray-500 dark:text-gray-400 space-y-1">
-											<p>
-												📍 <strong>Format:</strong> Enter decimal values (e.g., "49.4944" for latitude and "0.1079" for longitude)
-											</p>
 										</div>
 									</TabsContent>
 								</Tabs>
@@ -610,7 +588,7 @@ export default function HackathonApp() {
 									size="lg"
 								>
 									<Search className="h-5 w-5 mr-2 transition-transform duration-300 group-hover:rotate-12" />
-									{t('search.button')}
+									Rechercher
 								</Button>
 							</CardContent>
 						</Card>
@@ -626,10 +604,10 @@ export default function HackathonApp() {
 						</div>
 						<div className="text-center space-y-2 animate-in slide-in-from-bottom-4 duration-300 delay-300">
 							<h3 className="text-2xl font-semibold text-gray-900 dark:text-white animate-in slide-in-from-left-4 duration-300 delay-300">
-								{t('loading')}
+								Chargement
 							</h3>
 							<p className="text-gray-600 dark:text-gray-300 animate-in slide-in-from-right-4 duration-300 delay-300">
-								{t('search.description')}
+								Cela peut prendre quelques instants, veuillez patienter...
 							</p>
 						</div>
 						<div className="flex space-x-1 animate-in slide-in-from-bottom-2 duration-300 delay-300">
@@ -638,12 +616,13 @@ export default function HackathonApp() {
 							<div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
 						</div>
 					</div>
-				)}				{/* Results State */}
+				)}
+				{/* Results State */}
 				{appState === "results" && locationData && (
 					<div className="space-y-6 animate-in fade-in-0 duration-300">
 						<div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-300">
 							<h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white animate-in slide-in-from-left-6 duration-300">
-								{t('results.title')}
+								Location Results
 							</h2>
 							<div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
 								<Button
@@ -660,7 +639,7 @@ export default function HackathonApp() {
 									className="flex items-center justify-center space-x-2 transition-all hover:scale-105 hover:shadow-md cursor-pointer dark:text-white"
 								>
 									<ArrowLeft className="h-4 w-4 transition-transform duration-300 group-hover:-translate-x-1" />
-									<span>{t('results.back')}</span>
+									<span>Retour</span>
 								</Button>
 							</div>
 						</div>
