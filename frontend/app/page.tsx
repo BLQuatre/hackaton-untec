@@ -111,7 +111,7 @@ type SearchMethod = "address" | "coordinates"
 
 export default function HackathonApp() {
 	// App state management
-	const [appState, setAppState] = useState<AppState>("search")
+	const [appState, setAppState] = useState<AppState>("loading")
 	const [darkMode, setDarkMode] = useState(false)
 	const [searchMethod, setSearchMethod] = useState<SearchMethod>("address")
 
@@ -597,26 +597,45 @@ export default function HackathonApp() {
 
 				{/* Loading State */}
 				{appState === "loading" && (
-					<div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 animate-in fade-in-0 duration-300">
+					<div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8 animate-in fade-in-0 duration-300 relative">
+						{/* Main loading spinner with multiple layers */}
 						<div className="relative animate-in zoom-in-50 duration-300">
-							<Loader2 className="h-16 w-16 animate-spin text-blue-600 dark:text-blue-400" />
-							<div className="absolute inset-0 rounded-full border-4 border-blue-200 dark:border-blue-800 animate-pulse"></div>
+							{/* Outer rotating ring */}
+							<div className="absolute inset-0 w-20 h-20 border-4 border-transparent border-t-blue-600 dark:border-t-blue-400 rounded-full animate-spin" style={{ animationDuration: "1s" }}></div>
+
+							{/* Middle rotating ring */}
+							<div className="absolute inset-2 w-16 h-16 border-3 border-transparent border-r-purple-600 dark:border-r-purple-400 rounded-full animate-spin" style={{ animationDuration: "1.5s", animationDirection: "reverse" }}></div>
+
+							{/* Inner rotating ring */}
+							<div className="absolute inset-4 w-12 h-12 border-2 border-transparent border-b-indigo-600 dark:border-b-indigo-400 rounded-full animate-spin" style={{ animationDuration: "2s" }}></div>
+
+							{/* Center pulsing dot */}
+							<div className="absolute inset-7 w-6 h-6 bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 rounded-full animate-pulse"></div>
+
+							{/* Loader2 icon in center */}
+							<Loader2 className="relative z-10 h-20 w-20 animate-spin text-transparent" />
 						</div>
-						<div className="text-center space-y-2 animate-in slide-in-from-bottom-4 duration-300 delay-300">
-							<h3 className="text-2xl font-semibold text-gray-900 dark:text-white animate-in slide-in-from-left-4 duration-300 delay-300">
+
+						{/* Dynamic text with typewriter effect */}
+						<div className="text-center space-y-3 animate-in slide-in-from-bottom-4 duration-300 delay-300">
+							<h3 className="text-3xl font-bold bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 dark:from-blue-400 dark:via-purple-400 dark:to-indigo-400 bg-clip-text text-transparent animate-in slide-in-from-left-4 duration-300 delay-300">
 								Chargement
 							</h3>
-							<p className="text-gray-600 dark:text-gray-300 animate-in slide-in-from-right-4 duration-300 delay-300">
-								Cela peut prendre quelques instants, veuillez patienter...
+							<p className="text-gray-600 dark:text-gray-300 animate-in slide-in-from-right-4 duration-300 delay-300 text-lg">
+								Analyse des données en cours
 							</p>
 						</div>
-						<div className="flex space-x-1 animate-in slide-in-from-bottom-2 duration-300 delay-300">
-							<div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce"></div>
-							<div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: "0.1s" }}></div>
-							<div className="w-2 h-2 bg-blue-600 rounded-full animate-bounce" style={{ animationDelay: "0.2s" }}></div>
+
+						{/* Enhanced bouncing dots with gradient colors */}
+						<div className="flex space-x-2 animate-in slide-in-from-bottom-2 duration-300 delay-500">
+							<div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0s" }}></div>
+							<div className="w-3 h-3 bg-gradient-to-r from-purple-500 to-purple-600 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.1s" }}></div>
+							<div className="w-3 h-3 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.2s" }}></div>
+							<div className="w-3 h-3 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full animate-bounce shadow-lg" style={{ animationDelay: "0.3s" }}></div>
 						</div>
 					</div>
 				)}
+
 				{/* Results State */}
 				{appState === "results" && locationData && (
 					<div className="space-y-6 animate-in fade-in-0 duration-300">
