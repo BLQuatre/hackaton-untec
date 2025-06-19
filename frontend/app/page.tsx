@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { MapPin, Moon, Sun, Search, ArrowLeft, Loader2, Download, BarChart3, Map } from "lucide-react"
+import { MapPin, Moon, Sun, Search, ArrowLeft, Loader2, Download, BarChart3, Map, Brain } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { LanguageSwitcher } from "@/components/LanguageSwitcher"
 import { useLanguage } from "@/contexts/LanguageContext"
@@ -664,8 +664,8 @@ export default function HackathonApp() {
 								</Button>
 							</div>
 						</div>
-
-						<div id="results-content" className="space-y-6">							{/* Location Header */}
+						<div id="results-content" className="space-y-6">
+							{/* Location Header */}
 							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl animate-in slide-in-from-bottom-6 duration-300 hover:shadow-2xl transition-all">
 								<CardContent className="p-8">
 									<div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-6 hover:scale-[1.02] transition-all">
@@ -693,8 +693,30 @@ export default function HackathonApp() {
 										</div>
 									</div>
 								</CardContent>
-							</Card>							{/* Key Statistics Cards */}
-							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+							</Card>							{/* Tabs for Stats and Resume */}
+							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm dark:border-gray-700/50 border-white/30 shadow-xl">
+								<CardContent className="p-6">
+									<Tabs defaultValue="stats" className="transition-all duration-300">
+										<TabsList className="grid w-full grid-cols-2 transition-all duration-300">
+											<TabsTrigger
+												value="stats"
+												className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+											>
+												<BarChart3 className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
+												<span>Statistics</span>
+											</TabsTrigger>
+											<TabsTrigger
+												value="resume"
+												className="flex items-center space-x-2 transition-all duration-300 hover:scale-[1.02] cursor-pointer"
+											>
+												<Brain className="h-4 w-4 transition-transform duration-300 group-hover:rotate-12" />
+												<span>AI Analysis</span>
+											</TabsTrigger>
+										</TabsList>
+
+										<TabsContent value="stats" className="space-y-6 mt-6 animate-in slide-in-from-left-4 duration-300">
+											{/* Key Statistics Cards */}
+											<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-lg hover:shadow-xl transition-all hover:scale-105">
 									<CardContent className="p-6">
 										<div className="flex items-center justify-between">
@@ -776,7 +798,8 @@ export default function HackathonApp() {
 									<CardDescription className="dark:text-gray-300">
 										Comprehensive evaluation across different categories
 									</CardDescription>
-								</CardHeader>								<CardContent>
+								</CardHeader>
+								<CardContent>
 									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
 										{[
 											{ name: 'Commerce', scoreKey: 'Score_Commerce', color: 'bg-green-500', icon: '🛍️' },
@@ -819,7 +842,8 @@ export default function HackathonApp() {
 										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
 											💼 Employment Overview
 										</CardTitle>
-									</CardHeader>									<CardContent className="space-y-4">
+									</CardHeader>
+									<CardContent className="space-y-4">
 										<div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4">
 											<div className="flex items-center justify-between mb-2">
 												<span className="text-red-700 dark:text-red-300 font-medium">Unemployed People</span>
@@ -858,7 +882,8 @@ export default function HackathonApp() {
 										<CardTitle className="text-xl dark:text-white flex items-center gap-2">
 											🎓 Education Statistics
 										</CardTitle>
-									</CardHeader>									<CardContent className="space-y-4">
+									</CardHeader>
+									<CardContent className="space-y-4">
 										{locationData.School_Charge && (
 											<>
 												<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
@@ -911,7 +936,8 @@ export default function HackathonApp() {
 										Services and facilities within walking distance
 									</CardDescription>
 								</CardHeader>
-								<CardContent>									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+								<CardContent>
+									<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 										{[
 											{ type: 'Shops', countKey: 'Shop_nbr', distanceKey: 'Shop_average_distance', radiusKey: 'Shop_radius', icon: '🛍️',
 											  bgClass: 'bg-blue-50 dark:bg-blue-900/20', borderClass: 'border-blue-200 dark:border-blue-800', textClass: 'text-blue-600 dark:text-blue-400' },
@@ -968,7 +994,8 @@ export default function HackathonApp() {
 											<MapPin className="h-5 w-5" />
 											Location Map
 										</CardTitle>
-									</CardHeader>									<CardContent>
+									</CardHeader>
+									<CardContent>
 										<div className="space-y-4">
 											<div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4">
 												<h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">Address</h4>
@@ -1011,7 +1038,8 @@ export default function HackathonApp() {
 											<BarChart3 className="h-5 w-5" />
 											Score Breakdown
 										</CardTitle>
-									</CardHeader>									<CardContent>
+									</CardHeader>
+									<CardContent>
 										<div className="h-64 flex items-center justify-center">
 											<div className="relative w-48 h-48">
 												{(() => {
@@ -1046,40 +1074,41 @@ export default function HackathonApp() {
 												})()}
 											</div>
 										</div>
-									</CardContent>
+										</CardContent>
 								</Card>
 							</div>
+										</TabsContent>
 
-							{/* AI Resume Section */}
-							{locationData.resume && (
-								<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
-									<CardHeader>
-										<CardTitle className="text-2xl dark:text-white flex items-center gap-2">
-											<span>🤖</span>
-											AI Analysis Summary
-										</CardTitle>
-										<CardDescription className="dark:text-gray-300">
-											Comprehensive analysis based on all available data
-										</CardDescription>
-									</CardHeader>
-									<CardContent>
-										<div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
-											<div className="prose prose-purple dark:prose-invert prose-sm sm:prose-base max-w-none prose-headings:text-purple-900 dark:prose-headings:text-purple-100 prose-p:text-purple-800 dark:prose-p:text-purple-200 prose-strong:text-purple-900 dark:prose-strong:text-purple-100 prose-em:text-purple-700 dark:prose-em:text-purple-300">
-												<ReactMarkdown
-													remarkPlugins={[remarkGfm]}
-													components={{
-														blockquote: ({children}) => <blockquote className="border-l-4 border-purple-300 dark:border-purple-600 pl-4 italic bg-purple-50/50 dark:bg-purple-900/10 py-2 my-4 not-prose">{children}</blockquote>,
-														code: ({children}) => <code className="bg-purple-100 dark:bg-purple-800/30 px-1.5 py-0.5 rounded text-sm font-mono text-purple-900 dark:text-purple-100 not-prose">{children}</code>,
-														pre: ({children}) => <pre className="bg-purple-100 dark:bg-purple-800/30 p-4 rounded-lg overflow-x-auto text-sm font-mono text-purple-900 dark:text-purple-100 not-prose">{children}</pre>,
-													}}
-												>
-													{locationData.resume}
-												</ReactMarkdown>
-											</div>
-										</div>
-									</CardContent>
-								</Card>
-							)}
+										<TabsContent value="resume" className="space-y-6 mt-6 animate-in slide-in-from-right-4 duration-300">
+											{/* AI Resume Section */}
+											{locationData.resume ? (
+												<div className="bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/20 dark:to-pink-900/20 rounded-lg p-6 border border-purple-200 dark:border-purple-800">
+													<div className="prose prose-purple dark:prose-invert prose-sm sm:prose-base max-w-none prose-headings:text-purple-900 dark:prose-headings:text-purple-100 prose-p:text-purple-800 dark:prose-p:text-purple-200 prose-strong:text-purple-900 dark:prose-strong:text-purple-100 prose-em:text-purple-700 dark:prose-em:text-purple-300">
+														<ReactMarkdown
+															remarkPlugins={[remarkGfm]}
+															components={{
+																blockquote: ({children}) => <blockquote className="border-l-4 border-purple-300 dark:border-purple-600 pl-4 italic bg-purple-50/50 dark:bg-purple-900/10 py-2 my-4 not-prose">{children}</blockquote>,
+																code: ({children}) => <code className="bg-purple-100 dark:bg-purple-800/30 px-1.5 py-0.5 rounded text-sm font-mono text-purple-900 dark:text-purple-100 not-prose">{children}</code>,
+																pre: ({children}) => <pre className="bg-purple-100 dark:bg-purple-800/30 p-4 rounded-lg overflow-x-auto text-sm font-mono text-purple-900 dark:text-purple-100 not-prose">{children}</pre>,
+															}}
+														>
+															{locationData.resume}
+														</ReactMarkdown>
+													</div>
+												</div>
+											) : (
+												<div className="text-center py-12">
+													<div className="text-gray-400 dark:text-gray-600 mb-4">
+														<Brain className="h-16 w-16 mx-auto" />
+													</div>
+													<h3 className="text-xl font-semibold text-gray-600 dark:text-gray-400 mb-2">No AI Analysis Available</h3>
+													<p className="text-gray-500 dark:text-gray-500">The AI analysis will appear here when available.</p>
+												</div>
+											)}
+										</TabsContent>
+									</Tabs>
+								</CardContent>
+							</Card>
 						</div>
 					</div>
 				)}
