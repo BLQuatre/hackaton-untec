@@ -80,6 +80,27 @@ interface EnhancedLocationData {
 	Score_Commerce?: string
 	"Score_Santé"?: string
 	Score_Global?: string
+
+	// Natural risks data
+	Flood_Risk?: {
+		level: 'Faible' | 'Modéré' | 'Élevé'
+		flood_zones: string[]
+		historical_events?: number
+		prevention_measures?: string[]
+	}
+	Earthquake_Risk?: {
+		seismic_zone: number // 1-5 scale
+		level: 'Très faible' | 'Faible' | 'Modéré' | 'Moyen' | 'Fort'
+		magnitude_risk: string
+		building_regulations?: string[]
+	}
+	Radon_Risk?: {
+		level: 'Faible' | 'Modéré' | 'Élevé'
+		potential_category: number // 1-3 category
+		measurement_required: boolean
+		prevention_advice?: string[]
+	}
+
 	// School charge data
 	School_Charge?: {
 		Total_of_Elementary_School?: number
@@ -406,8 +427,46 @@ export default function HackathonDemoApp() {
 				},
 				Most_common_status: 'Optimal',
 				Most_common_count: Math.floor(Math.random() * 15) + 8,
-				Most_common_occurence: `${(Math.random() * 60 + 40).toFixed(1)}%`
-			}
+				Most_common_occurence: `${(Math.random() * 60 + 40).toFixed(1)}%`			},
+
+			// Natural risks data
+			Flood_Risk: {
+				level: ['Faible', 'Modéré', 'Élevé'][Math.floor(Math.random() * 3)] as 'Faible' | 'Modéré' | 'Élevé',
+				flood_zones: [
+					'Zone inondable AZI',
+					'Bassin versant Loire',
+					'Cours d\'eau secondaires'
+				].slice(0, Math.floor(Math.random() * 3) + 1),
+				historical_events: Math.floor(Math.random() * 5) + 1,
+				prevention_measures: [
+					'Système d\'alerte météorologique',
+					'Digues et barrages',
+					'Plans de prévention des risques (PPR)',
+					'Réseaux d\'évacuation renforcés'
+				].slice(0, Math.floor(Math.random() * 3) + 2)
+			},
+			Earthquake_Risk: {
+				seismic_zone: Math.floor(Math.random() * 5) + 1,
+				level: ['Très faible', 'Faible', 'Modéré', 'Moyen', 'Fort'][Math.floor(Math.random() * 5)] as 'Très faible' | 'Faible' | 'Modéré' | 'Moyen' | 'Fort',
+				magnitude_risk: `${(Math.random() * 2 + 3).toFixed(1)}-${(Math.random() * 2 + 5).toFixed(1)}`,
+				building_regulations: [
+					'Normes parasismiques PS-MI',
+					'Eurocode 8 applicable',
+					'Contrôles techniques renforcés',
+					'Matériaux antisismiques recommandés'
+				].slice(0, Math.floor(Math.random() * 3) + 2)
+			},
+			Radon_Risk: {
+				level: ['Faible', 'Modéré', 'Élevé'][Math.floor(Math.random() * 3)] as 'Faible' | 'Modéré' | 'Élevé',
+				potential_category: Math.floor(Math.random() * 3) + 1,
+				measurement_required: Math.random() > 0.5,
+				prevention_advice: [
+					'Ventilation naturelle suffisante',
+					'Étanchéité du sous-sol recommandée',
+					'Mesures de concentration conseillées',
+					'Système de ventilation mécanique'
+				].slice(0, Math.floor(Math.random() * 3) + 2)
+			},
 
 			// AI-generated resume not available in demo mode
 			// resume: undefined
@@ -1171,6 +1230,85 @@ export default function HackathonDemoApp() {
 											</div>
 										);
 									})()}
+								</CardContent>
+							</Card>
+
+							{/* Natural Risks Section */}
+							<Card className="dark:bg-gray-800/80 bg-white/80 backdrop-blur-sm shadow-xl">
+								<CardHeader>
+									<CardTitle className="text-2xl dark:text-white flex items-center gap-2">
+										<span className="text-2xl">⚠️</span>
+										Risques naturels
+									</CardTitle>
+									<CardDescription className="dark:text-gray-300">
+										Évaluation des risques environnementaux de la zone
+									</CardDescription>
+								</CardHeader>
+								<CardContent>
+									<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+										{/* Flood Risk */}
+										{locationData.Flood_Risk && (
+											<div className={`rounded-lg p-6 border-2 transition-all hover:scale-105 ${
+												locationData.Flood_Risk.level === 'Élevé' ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700' :
+												locationData.Flood_Risk.level === 'Modéré' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700' :
+												'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+											}`}>
+												<div className="text-center mb-4">
+													<div className="text-4xl mb-2">🌊</div>
+													<h3 className="text-lg font-bold text-gray-900 dark:text-white">Risque d'inondation</h3>
+													<div className={`text-2xl font-bold mb-3 ${
+														locationData.Flood_Risk.level === 'Élevé' ? 'text-red-600 dark:text-red-400' :
+														locationData.Flood_Risk.level === 'Modéré' ? 'text-orange-600 dark:text-orange-400' :
+														'text-green-600 dark:text-green-400'
+													}`}>
+														{locationData.Flood_Risk.level}
+													</div>
+												</div>
+											</div>
+										)}
+
+										{/* Earthquake Risk */}
+										{locationData.Earthquake_Risk && (
+											<div className={`rounded-lg p-6 border-2 transition-all hover:scale-105 ${
+												locationData.Earthquake_Risk.level === 'Fort' ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700' :
+												locationData.Earthquake_Risk.level === 'Moyen' || locationData.Earthquake_Risk.level === 'Modéré' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700' :
+												'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+											}`}>
+												<div className="text-center mb-4">
+													<div className="text-4xl mb-2">🏚️</div>
+													<h3 className="text-lg font-bold text-gray-900 dark:text-white">Risque sismique</h3>
+													<div className={`text-2xl font-bold mb-3 ${
+														locationData.Earthquake_Risk.level === 'Fort' ? 'text-red-600 dark:text-red-400' :
+														locationData.Earthquake_Risk.level === 'Moyen' || locationData.Earthquake_Risk.level === 'Modéré' ? 'text-orange-600 dark:text-orange-400' :
+														'text-green-600 dark:text-green-400'
+													}`}>
+														{locationData.Earthquake_Risk.level}
+													</div>
+												</div>
+											</div>
+										)}
+
+										{/* Radon Risk */}
+										{locationData.Radon_Risk && (
+											<div className={`rounded-lg p-6 border-2 transition-all hover:scale-105 ${
+												locationData.Radon_Risk.level === 'Élevé' ? 'bg-red-50 dark:bg-red-900/20 border-red-300 dark:border-red-700' :
+												locationData.Radon_Risk.level === 'Modéré' ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-300 dark:border-orange-700' :
+												'bg-green-50 dark:bg-green-900/20 border-green-300 dark:border-green-700'
+											}`}>
+												<div className="text-center mb-4">
+													<div className="text-4xl mb-2">☢️</div>
+													<h3 className="text-lg font-bold text-gray-900 dark:text-white">Potentiel radon</h3>
+													<div className={`text-2xl font-bold mb-3 ${
+														locationData.Radon_Risk.level === 'Élevé' ? 'text-red-600 dark:text-red-400' :
+														locationData.Radon_Risk.level === 'Modéré' ? 'text-orange-600 dark:text-orange-400' :
+														'text-green-600 dark:text-green-400'
+													}`}>
+														{locationData.Radon_Risk.level}
+													</div>
+												</div>
+											</div>
+										)}
+									</div>
 								</CardContent>
 							</Card>
 
